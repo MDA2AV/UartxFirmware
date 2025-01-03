@@ -21,7 +21,8 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include <string.h>
+#include <stdio.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -31,7 +32,8 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-
+#define RX_BUFFER_SIZE 100
+#define UART_TIMEOUT 1000 // Timeout for UART receive in milliseconds
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -40,9 +42,9 @@
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
-UART_HandleTypeDef huart2;
 UART_HandleTypeDef huart3;
-
+uint8_t rxBuffer[RX_BUFFER_SIZE];
+uint8_t rxChar;
 /* USER CODE BEGIN PV */
 
 /* USER CODE END PV */
@@ -50,7 +52,6 @@ UART_HandleTypeDef huart3;
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
-static void MX_USART2_UART_Init(void);
 static void MX_USART3_UART_Init(void);
 /* USER CODE BEGIN PFP */
 
@@ -59,13 +60,110 @@ static void MX_USART3_UART_Init(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
-#define RX_BUFFER_SIZE 10
+/**
+ * @brief Resets the output state of GPIO pins.
+ *
+ * This function sets the output state of GPIO pins PC8 and PC9 to LOW.
+ * It is typically used to reset or initialize the state of the pins.
+ */
+void reset_outputs(void)
+{
+    // Set GPIO pins PC8 and PC9 to LOW
+    HAL_GPIO_WritePin(GPIOC, GPIO_PIN_8 | GPIO_PIN_9, GPIO_PIN_RESET);
+}
 
-uint8_t rxBuffer[RX_BUFFER_SIZE]; // Buffer to accumulate received message
-uint8_t rxChar;                  // Buffer for a single received character
-// uint8_t txMessage[] = "ok\n";    // Response message
-// uint8_t index = 0;               // Index to track the buffer position
+/**
+ * @brief Handles input from sensors and transmits a corresponding value over UART.
+ *
+ * This function reads the states of two input pins (PC0 and PC1), representing two sensors.
+ * Based on their states, it assigns a specific character (0, 1, 2, or 3) to `output`:
+ * - '0': Both sensors are LOW (00).
+ * - '1': Sensor 1 is LOW, and Sensor 2 is HIGH (01).
+ * - '2': Sensor 1 is HIGH, and Sensor 2 is LOW (10).
+ * - '3': Both sensors are HIGH (11).
+ *
+ * The resulting character, along with a newline, is transmitted over UART.
+ */
+void handle_inputs(void)
+{
+    // Read the state of Sensor 1 (PC0) and Sensor 2 (PC1)
+    uint8_t sensor1 = HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_0); // Sensor 1 state
+    uint8_t sensor2 = HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_1); // Sensor 2 state
 
+    char output; // Variable to store the output character based on sensor states
+
+    // Determine the output value based on the sensor states
+    if (sensor1 == GPIO_PIN_RESET && sensor2 == GPIO_PIN_RESET)
+    {
+        output = '0'; // Both sensors are LOW (00)
+    }
+    else if (sensor1 == GPIO_PIN_RESET && sensor2 == GPIO_PIN_SET)
+    {
+        output = '1'; // Sensor 1 is LOW, Sensor 2 is HIGH (01)
+    }
+    else if (sensor1 == GPIO_PIN_SET && sensor2 == GPIO_PIN_RESET)
+    {
+        output = '2'; // Sensor 1 is HIGH, Sensor 2 is LOW (10)
+    }
+    else if (sensor1 == GPIO_PIN_SET && sensor2 == GPIO_PIN_SET)
+    {
+        output = '3'; // Both sensors are HIGH (11)
+    }
+
+    // Prepare the response string with the output character and a newline
+    char response[3];
+    snprintf(response, sizeof(response), "%c\n", output);
+
+    // Transmit the response over UART
+    HAL_UART_Transmit(&huart3, (uint8_t *)response, strlen(response), HAL_MAX_DELAY);
+}
+
+/**
+ * @brief Controls the output state of specific GPIO pins based on input parameters.
+ *
+ * The function takes two parameters:
+ * - `pin`: Specifies the target pin ('0' or '1').
+ * - `state`: Specifies the desired state ('1' for HIGH, '0' for LOW).
+ *
+ * Depending on the `pin` and `state` values, the function sets or resets the
+ * corresponding GPIO pin (PC8 or PC9). This allows controlling the output
+ * logic levels of specific GPIOs dynamically.
+ *
+ * @param pin   The target pin ('0' or '1').
+ *              - '0': Refers to GPIO_PIN_8 (PC8).
+ *              - '1': Refers to GPIO_PIN_9 (PC9).
+ * @param state The desired output state ('1' or '0').
+ *              - '1': Sets the pin to HIGH state.
+ *              - '0': Resets the pin to LOW state.
+ *
+ * Example Usage:
+ * - `set_output('0', '1');` Sets GPIO_PIN_8 (PC8) to HIGH.
+ * - `set_output('1', '0');` Sets GPIO_PIN_9 (PC9) to LOW.
+ */
+void set_output(char pin, char state) {
+    // Check if the target pin is '0' (GPIO_PIN_8)
+    if (pin == '0') {
+        // Set GPIO_PIN_8 to HIGH if state is '1'
+        if (state == '1') {
+            HAL_GPIO_WritePin(GPIOC, GPIO_PIN_8, GPIO_PIN_SET);
+        }
+        // Set GPIO_PIN_8 to LOW if state is '0'
+        else if (state == '0') {
+            HAL_GPIO_WritePin(GPIOC, GPIO_PIN_8, GPIO_PIN_RESET);
+        }
+    }
+    // Check if the target pin is '1' (GPIO_PIN_9)
+    else if (pin == '1') {
+        // Set GPIO_PIN_9 to HIGH if state is '1'
+        if (state == '1') {
+            HAL_GPIO_WritePin(GPIOC, GPIO_PIN_9, GPIO_PIN_SET);
+        }
+        // Set GPIO_PIN_9 to LOW if state is '0'
+        else if (state == '0') {
+            HAL_GPIO_WritePin(GPIOC, GPIO_PIN_9, GPIO_PIN_RESET);
+        }
+    }
+}
 /* USER CODE END 0 */
 
 /**
@@ -74,7 +172,6 @@ uint8_t rxChar;                  // Buffer for a single received character
   */
 int main(void)
 {
-
   /* USER CODE BEGIN 1 */
 
   /* USER CODE END 1 */
@@ -97,13 +194,8 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
-  MX_USART2_UART_Init();
   MX_USART3_UART_Init();
   /* USER CODE BEGIN 2 */
-
-  HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_5);
-  HAL_Delay(1000);
-  HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_5);
 
   /* USER CODE END 2 */
 
@@ -111,161 +203,50 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-	  /* USER CODE BEGIN 3 */
-	  while (1)
-	  {
-	      // Receive a command from the UART (sent by the Python program)
-	      if (HAL_UART_Receive(&huart3, &rxChar, 1, HAL_MAX_DELAY) == HAL_OK)
-	      {
-	          // Interpret the received command
-	          switch (rxChar)
-	          {
-	          case 'R': // Read GPIO states and send detailed output
-	          {
-	              // Read GPIO input statesif ((rxBuffer[0] == 'd') && (rxBuffer[1] == '\n'))
-	        	    {
-	        	        // Handle the 'd\n' command or input here
-	        	    }
-	              uint8_t sensor1 = HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_0);
-	              uint8_t sensor2 = HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_1);
+	  // Clear the buffer before receiving new data
+	     memset(rxBuffer, 0, RX_BUFFER_SIZE);
 
+	     // Wait for a 5-character command over UART
+	     if (HAL_UART_Receive(&huart3, rxBuffer, 5, UART_TIMEOUT) == HAL_OK)
+	     {
+	         // Check if the received command starts with 'r'
+	         if (strncmp((char *)rxBuffer, "r", 1) == 0)
+	         {
+	             // Reset all outputs (custom function you defined)
+	             reset_outputs();
+	         }
+	         // Check if the command starts with 'd'
+	         else if (strncmp((char *)rxBuffer, "d", 1) == 0)
+	         {
+	             // Handle inputs (custom function you defined)
+	             handle_inputs();
+	             continue;
+	         }
+	         // Check if the command starts with 's'
+	         else if (strncmp((char *)rxBuffer, "s", 1) == 0)
+	         {
+	             // Extract the pin and state from the received buffer
+	             char pin = rxBuffer[1];   // Second character specifies the pin
+	             char state = rxBuffer[2]; // Third character specifies the state
 
-			  // Check for floating pins
-				  char warning[50];
-				  if (sensor1 == GPIO_PIN_RESET && sensor2 == GPIO_PIN_RESET)
-				  {
-					  strcpy(warning, "Pins might be floating!\n");
-				  }
-				  else if (sensor1 != GPIO_PIN_RESET && sensor2 != GPIO_PIN_RESET)
-				  {
-					  strcpy(warning, "  ");
-				  }
+	             // Set the output based on the received pin and state
+	             set_output(pin, state);
+	         }
+	         else
+	         {
+	             // Transmit an error message if the command is unknown
+	             HAL_UART_Transmit(&huart3, "Unknown\n", 8, HAL_MAX_DELAY);
+	             continue;
+	         }
+	     }
 
-	              // Determine the logic state
-	              char state[3];
-	              if (sensor1 == GPIO_PIN_RESET && sensor2 == GPIO_PIN_RESET)
-	              {
-	                  strcpy(state, "00");
-	              }
-	              else if (sensor1 == GPIO_PIN_RESET && sensor2 == GPIO_PIN_SET)
-	              {
-	                  strcpy(state, "01");
-	              }
-	              else if (sensor1 == GPIO_PIN_SET && sensor2 == GPIO_PIN_RESET)
-	              {
-	                  strcpy(state, "10");
-	              }
-	              else if (sensor1 == GPIO_PIN_SET && sensor2 == GPIO_PIN_SET)
-	              {
-	                  strcpy(state, "11");
-	              }
-
-	              // Determine the voltage levels for detailed output
-	              char sensor1_voltage[4];
-	              char sensor2_voltage[4];
-
-	              strcpy(sensor1_voltage, (sensor1 == GPIO_PIN_SET) ? "5V" : "0V");
-	              strcpy(sensor2_voltage, (sensor2 == GPIO_PIN_SET) ? "5V" : "0V");
-
-	              // Construct the detailed message
-	              char response[100];
-	              snprintf(response, sizeof(response),
-	                       "State - %s\nSensor 1 - %s\nSensor 2 - %s\nWarning - %s\n",
-	                       state, sensor1_voltage, sensor2_voltage, warning);
-
-	              // Send the message via UART
-	              HAL_UART_Transmit(&huart3, (uint8_t *)response, strlen(response), HAL_MAX_DELAY);
-
-	              break;
-	          }
-
-
-	          case 'C': // Control GPIO outputs
-	          {
-	              // Receive additional control data
-	              uint8_t controlData[2];
-	              HAL_UART_Receive(&huart3, controlData, 2, HAL_MAX_DELAY);
-
-	              // Set GPIO outputs based on received control data
-	              HAL_GPIO_WritePin(GPIOC, GPIO_PIN_8, (controlData[0] == '1') ? GPIO_PIN_SET : GPIO_PIN_RESET);
-	              HAL_GPIO_WritePin(GPIOC, GPIO_PIN_9, (controlData[1] == '1') ? GPIO_PIN_SET : GPIO_PIN_RESET);
-
-	              // Acknowledge the command
-	              char ack[] = "OK\n";
-	              HAL_UART_Transmit(&huart3, (uint8_t *)ack, strlen(ack), HAL_MAX_DELAY);
-	              break;
-	          }
-
-	          case 'T': // Test GPIO connections
-	                      test_connection();
-	                      char ack[] = "Test Completed\n";
-	                      HAL_UART_Transmit(&huart3, (uint8_t *)ack, strlen(ack), HAL_MAX_DELAY);
-	                      break;
-
-	          default: // Invalid command
-	          {
-	              char error[] = "ERR\n";
-	              HAL_UART_Transmit(&huart3, (uint8_t *)error, strlen(error), HAL_MAX_DELAY);
-	              break;
-	          }
-	          }
-	      }
-	  }
-	  /* USER CODE END 3 */
-
+	     HAL_UART_Transmit(&huart3, rxBuffer, 5, HAL_MAX_DELAY);
   }
+  /* USER CODE END WHILE */
+
+  /* USER CODE BEGIN 3 */
+}
   /* USER CODE END 3 */
-}
-
-void test_connection(void)
-{
-    char message[100];
-
-    // Set PC8 to HIGH and PC9 to LOW
-    HAL_GPIO_WritePin(GPIOC, GPIO_PIN_8, GPIO_PIN_SET);    // Set PC8 HIGH
-    HAL_GPIO_WritePin(GPIOC, GPIO_PIN_9, GPIO_PIN_RESET);  // Set PC9 LOW
-
-    HAL_Delay(10);  // Delay to allow signals to stabilize
-
-    // Read PC0 and PC1
-    GPIO_PinState pc0_state = HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_0);
-    GPIO_PinState pc1_state = HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_1);
-
-    // Verify the connection
-    if (pc0_state == GPIO_PIN_SET && pc1_state == GPIO_PIN_RESET)
-    {
-        snprintf(message, sizeof(message), "Connection OK: PC0 is HIGH (PC8), PC1 is LOW (PC9)\n");
-    }
-    else
-    {
-        snprintf(message, sizeof(message), "Connection Failed: PC0 or PC1 state mismatch (Test 1)\n");
-    }
-
-    HAL_UART_Transmit(&huart3, (uint8_t *)message, strlen(message), HAL_MAX_DELAY);
-
-    // Reverse states for further testing
-    HAL_GPIO_WritePin(GPIOC, GPIO_PIN_8, GPIO_PIN_RESET);  // Set PC8 LOW
-    HAL_GPIO_WritePin(GPIOC, GPIO_PIN_9, GPIO_PIN_SET);    // Set PC9 HIGH
-
-    HAL_Delay(10);  // Delay to allow signals to stabilize
-
-    // Read PC0 and PC1 again
-    pc0_state = HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_0);
-    pc1_state = HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_1);
-
-    if (pc0_state == GPIO_PIN_RESET && pc1_state == GPIO_PIN_SET)
-    {
-        snprintf(message, sizeof(message), "Connection OK: PC0 is LOW (PC8), PC1 is HIGH (PC9)\n");
-    }
-    else
-    {
-        snprintf(message, sizeof(message), "Connection Failed: PC0 or PC1 state mismatch (Test 2)\n");
-    }
-
-    HAL_UART_Transmit(&huart3, (uint8_t *)message, strlen(message), HAL_MAX_DELAY);
-}
-
-
 
 /**
   * @brief System Clock Configuration
@@ -315,53 +296,12 @@ void SystemClock_Config(void)
 }
 
 /**
-  * @brief USART2 Initialization Function
-  * @param None
-  * @retval None
-  */
-static void MX_USART2_UART_Init(void)
-{
-
-  /* USER CODE BEGIN USART2_Init 0 */
-
-  /* USER CODE END USART2_Init 0 */
-
-  /* USER CODE BEGIN USART2_Init 1 */
-
-  /* USER CODE END USART2_Init 1 */
-  huart2.Instance = USART2;
-  huart2.Init.BaudRate = 115200;
-  huart2.Init.WordLength = UART_WORDLENGTH_8B;
-  huart2.Init.StopBits = UART_STOPBITS_1;
-  huart2.Init.Parity = UART_PARITY_NONE;
-  huart2.Init.Mode = UART_MODE_TX_RX;
-  huart2.Init.HwFlowCtl = UART_HWCONTROL_NONE;
-  huart2.Init.OverSampling = UART_OVERSAMPLING_16;
-  if (HAL_UART_Init(&huart2) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  /* USER CODE BEGIN USART2_Init 2 */
-
-  /* USER CODE END USART2_Init 2 */
-
-}
-
-/**
   * @brief USART3 Initialization Function
   * @param None
   * @retval None
   */
 static void MX_USART3_UART_Init(void)
 {
-
-  /* USER CODE BEGIN USART3_Init 0 */
-
-  /* USER CODE END USART3_Init 0 */
-
-  /* USER CODE BEGIN USART3_Init 1 */
-
-  /* USER CODE END USART3_Init 1 */
   huart3.Instance = USART3;
   huart3.Init.BaudRate = 115200;
   huart3.Init.WordLength = UART_WORDLENGTH_8B;
@@ -374,10 +314,6 @@ static void MX_USART3_UART_Init(void)
   {
     Error_Handler();
   }
-  /* USER CODE BEGIN USART3_Init 2 */
-
-  /* USER CODE END USART3_Init 2 */
-
 }
 
 /**
@@ -388,39 +324,16 @@ static void MX_USART3_UART_Init(void)
 static void MX_GPIO_Init(void)
 {
   GPIO_InitTypeDef GPIO_InitStruct = {0};
-/* USER CODE BEGIN MX_GPIO_Init_1 */
-/* USER CODE END MX_GPIO_Init_1 */
 
   /* GPIO Ports Clock Enable */
   __HAL_RCC_GPIOC_CLK_ENABLE();
   __HAL_RCC_GPIOH_CLK_ENABLE();
-  __HAL_RCC_GPIOA_CLK_ENABLE();
-  __HAL_RCC_GPIOB_CLK_ENABLE();
 
-  /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_RESET);
-
-  /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_8|GPIO_PIN_9, GPIO_PIN_RESET);
-
-  /*Configure GPIO pin : B1_Pin */
-  GPIO_InitStruct.Pin = B1_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(B1_GPIO_Port, &GPIO_InitStruct);
-
-  /*Configure GPIO pins : PC0 PC1 PC2 PC3 */
-  GPIO_InitStruct.Pin = GPIO_PIN_0|GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3;
+  /*Configure GPIO pins : PC0 PC1 */
+  GPIO_InitStruct.Pin = GPIO_PIN_0|GPIO_PIN_1;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
-  GPIO_InitStruct.Pull = GPIO_PULLDOWN;
-  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
-
-  /*Configure GPIO pin : LD2_Pin */
-  GPIO_InitStruct.Pin = LD2_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(LD2_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
   /*Configure GPIO pins : PC8 PC9 */
   GPIO_InitStruct.Pin = GPIO_PIN_8|GPIO_PIN_9;
@@ -428,14 +341,7 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
-
-/* USER CODE BEGIN MX_GPIO_Init_2 */
-/* USER CODE END MX_GPIO_Init_2 */
 }
-
-/* USER CODE BEGIN 4 */
-
-/* USER CODE END 4 */
 
 /**
   * @brief  This function is executed in case of error occurrence.
@@ -443,28 +349,10 @@ static void MX_GPIO_Init(void)
   */
 void Error_Handler(void)
 {
-  /* USER CODE BEGIN Error_Handler_Debug */
-  /* User can add his own implementation to report the HAL error return state */
   __disable_irq();
   while (1)
   {
   }
-  /* USER CODE END Error_Handler_Debug */
 }
 
-#ifdef  USE_FULL_ASSERT
-/**
-  * @brief  Reports the name of the source file and the source line number
-  *         where the assert_param error has occurred.
-  * @param  file: pointer to the source file name
-  * @param  line: assert_param error line source number
-  * @retval None
-  */
-void assert_failed(uint8_t *file, uint32_t line)
-{
-  /* USER CODE BEGIN 6 */
-  /* User can add his own implementation to report the file name and line number,
-     ex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
-  /* USER CODE END 6 */
-}
-#endif /* USE_FULL_ASSERT */
+

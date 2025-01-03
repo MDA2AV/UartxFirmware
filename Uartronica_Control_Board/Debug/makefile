@@ -60,8 +60,8 @@ all: main-build
 main-build: Uartronica_Control_Board.elf secondary-outputs
 
 # Tool invocations
-Uartronica_Control_Board.elf Uartronica_Control_Board.map: $(OBJS) $(USER_OBJS) C:\Users\Admin.ONTPC12\STM32CubeIDE\workspace_1.17.0\Uartronica_Control_Board\STM32F446RETX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-gcc -o "Uartronica_Control_Board.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"C:\Users\Admin.ONTPC12\STM32CubeIDE\workspace_1.17.0\Uartronica_Control_Board\STM32F446RETX_FLASH.ld" --specs=nosys.specs -Wl,-Map="Uartronica_Control_Board.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
+Uartronica_Control_Board.elf Uartronica_Control_Board.map: $(OBJS) $(USER_OBJS) C:\Users\Admin.ONTPC12\Desktop\UartxFirmwareRepo\UartxFirmware\Uartronica_Control_Board\STM32F446RETX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-gcc -o "Uartronica_Control_Board.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"C:\Users\Admin.ONTPC12\Desktop\UartxFirmwareRepo\UartxFirmware\Uartronica_Control_Board\STM32F446RETX_FLASH.ld" --specs=nosys.specs -Wl,-Map="Uartronica_Control_Board.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
 	@echo 'Finished building target: $@'
 	@echo ' '
 
