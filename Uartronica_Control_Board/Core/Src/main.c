@@ -6,7 +6,7 @@
   ******************************************************************************
   * @attention
   *
-  * Copyright (c) 2024 STMicroelectronics.
+  * Copyright (c) 2025 STMicroelectronics.
   * All rights reserved.
   *
   * This software is licensed under terms that can be found in the LICENSE file
@@ -33,7 +33,6 @@
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
 #define RX_BUFFER_SIZE 100
-#define UART_TIMEOUT 1000 // Timeout for UART receive in milliseconds
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -43,8 +42,10 @@
 
 /* Private variables ---------------------------------------------------------*/
 UART_HandleTypeDef huart3;
-uint8_t rxBuffer[RX_BUFFER_SIZE];
-uint8_t rxChar;
+char rx_buffer[1];                  // Temporary buffer for single-byte UART reception
+char command_buffer[RX_BUFFER_SIZE]; // Buffer to store received command
+volatile uint8_t command_ready_flag = 0;  // Flag indicating a command is ready
+
 /* USER CODE BEGIN PV */
 
 /* USER CODE END PV */
@@ -53,8 +54,12 @@ uint8_t rxChar;
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_USART3_UART_Init(void);
-/* USER CODE BEGIN PFP */
 
+/* USER CODE BEGIN PFP */
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart);
+//void reset_outputs(void);
+//void handle_inputs(void);
+//void set_output(char pin, char state);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -62,108 +67,53 @@ static void MX_USART3_UART_Init(void);
 
 /**
  * @brief Resets the output state of GPIO pins.
- *
- * This function sets the output state of GPIO pins PC8 and PC9 to LOW.
- * It is typically used to reset or initialize the state of the pins.
  */
 void reset_outputs(void)
 {
-    // Set GPIO pins PC8 and PC9 to LOW
     HAL_GPIO_WritePin(GPIOC, GPIO_PIN_8 | GPIO_PIN_9, GPIO_PIN_RESET);
 }
 
 /**
  * @brief Handles input from sensors and transmits a corresponding value over UART.
- *
- * This function reads the states of two input pins (PC0 and PC1), representing two sensors.
- * Based on their states, it assigns a specific character (0, 1, 2, or 3) to `output`:
- * - '0': Both sensors are LOW (00).
- * - '1': Sensor 1 is LOW, and Sensor 2 is HIGH (01).
- * - '2': Sensor 1 is HIGH, and Sensor 2 is LOW (10).
- * - '3': Both sensors are HIGH (11).
- *
- * The resulting character, along with a newline, is transmitted over UART.
  */
 void handle_inputs(void)
 {
-    // Read the state of Sensor 1 (PC0) and Sensor 2 (PC1)
-    uint8_t sensor1 = HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_0); // Sensor 1 state
-    uint8_t sensor2 = HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_1); // Sensor 2 state
+    uint8_t sensor1 = HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_0);
+    uint8_t sensor2 = HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_1);
 
-    char output; // Variable to store the output character based on sensor states
-
-    // Determine the output value based on the sensor states
+    char output;
     if (sensor1 == GPIO_PIN_RESET && sensor2 == GPIO_PIN_RESET)
-    {
-        output = '0'; // Both sensors are LOW (00)
-    }
+        output = '0';
     else if (sensor1 == GPIO_PIN_RESET && sensor2 == GPIO_PIN_SET)
-    {
-        output = '1'; // Sensor 1 is LOW, Sensor 2 is HIGH (01)
-    }
+        output = '1';
     else if (sensor1 == GPIO_PIN_SET && sensor2 == GPIO_PIN_RESET)
-    {
-        output = '2'; // Sensor 1 is HIGH, Sensor 2 is LOW (10)
-    }
-    else if (sensor1 == GPIO_PIN_SET && sensor2 == GPIO_PIN_SET)
-    {
-        output = '3'; // Both sensors are HIGH (11)
-    }
+        output = '2';
+    else
+        output = '3';
 
-    // Prepare the response string with the output character and a newline
     char response[3];
     snprintf(response, sizeof(response), "%c\n", output);
-
-    // Transmit the response over UART
     HAL_UART_Transmit(&huart3, (uint8_t *)response, strlen(response), HAL_MAX_DELAY);
 }
 
 /**
  * @brief Controls the output state of specific GPIO pins based on input parameters.
- *
- * The function takes two parameters:
- * - `pin`: Specifies the target pin ('0' or '1').
- * - `state`: Specifies the desired state ('1' for HIGH, '0' for LOW).
- *
- * Depending on the `pin` and `state` values, the function sets or resets the
- * corresponding GPIO pin (PC8 or PC9). This allows controlling the output
- * logic levels of specific GPIOs dynamically.
- *
- * @param pin   The target pin ('0' or '1').
- *              - '0': Refers to GPIO_PIN_8 (PC8).
- *              - '1': Refers to GPIO_PIN_9 (PC9).
- * @param state The desired output state ('1' or '0').
- *              - '1': Sets the pin to HIGH state.
- *              - '0': Resets the pin to LOW state.
- *
- * Example Usage:
- * - `set_output('0', '1');` Sets GPIO_PIN_8 (PC8) to HIGH.
- * - `set_output('1', '0');` Sets GPIO_PIN_9 (PC9) to LOW.
  */
-void set_output(char pin, char state) {
-    // Check if the target pin is '0' (GPIO_PIN_8)
+void set_output(char pin, char state)
+{
     if (pin == '0') {
-        // Set GPIO_PIN_8 to HIGH if state is '1'
-        if (state == '1') {
+        if (state == '1')
             HAL_GPIO_WritePin(GPIOC, GPIO_PIN_8, GPIO_PIN_SET);
-        }
-        // Set GPIO_PIN_8 to LOW if state is '0'
-        else if (state == '0') {
+        else if (state == '0')
             HAL_GPIO_WritePin(GPIOC, GPIO_PIN_8, GPIO_PIN_RESET);
-        }
-    }
-    // Check if the target pin is '1' (GPIO_PIN_9)
-    else if (pin == '1') {
-        // Set GPIO_PIN_9 to HIGH if state is '1'
-        if (state == '1') {
+    } else if (pin == '1') {
+        if (state == '1')
             HAL_GPIO_WritePin(GPIOC, GPIO_PIN_9, GPIO_PIN_SET);
-        }
-        // Set GPIO_PIN_9 to LOW if state is '0'
-        else if (state == '0') {
+        else if (state == '0')
             HAL_GPIO_WritePin(GPIOC, GPIO_PIN_9, GPIO_PIN_RESET);
-        }
     }
 }
+
 /* USER CODE END 0 */
 
 /**
@@ -172,81 +122,59 @@ void set_output(char pin, char state) {
   */
 int main(void)
 {
-  /* USER CODE BEGIN 1 */
+    HAL_Init();
+    SystemClock_Config();
+    MX_GPIO_Init();
+    MX_USART3_UART_Init();
 
-  /* USER CODE END 1 */
+    HAL_UART_Receive_IT(&huart3, (uint8_t *)rx_buffer, 1);
 
-  /* MCU Configuration--------------------------------------------------------*/
+    while (1) {
+        if (command_ready_flag) {
+            if (strcmp(command_buffer, "r") == 0) {
+                reset_outputs();
+                HAL_UART_Transmit(&huart3, (uint8_t *)"Outputs Reset\n", 15, HAL_MAX_DELAY);
+            } else if (strcmp(command_buffer, "d") == 0) {
+                handle_inputs();
+            } else if (strncmp(command_buffer, "s", 1) == 0 && strlen(command_buffer) == 3) {
+                char pin = command_buffer[1];   // Second character specifies the pin
+                char state = command_buffer[2]; // Third character specifies the state
 
-  /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
-  HAL_Init();
-
-  /* USER CODE BEGIN Init */
-
-  /* USER CODE END Init */
-
-  /* Configure the system clock */
-  SystemClock_Config();
-
-  /* USER CODE BEGIN SysInit */
-
-  /* USER CODE END SysInit */
-
-  /* Initialize all configured peripherals */
-  MX_GPIO_Init();
-  MX_USART3_UART_Init();
-  /* USER CODE BEGIN 2 */
-
-  /* USER CODE END 2 */
-
-  /* Infinite loop */
-  /* USER CODE BEGIN WHILE */
-  while (1)
-  {
-	  // Clear the buffer before receiving new data
-	     memset(rxBuffer, 0, RX_BUFFER_SIZE);
-
-	     // Wait for a 5-character command over UART
-	     if (HAL_UART_Receive(&huart3, rxBuffer, 5, UART_TIMEOUT) == HAL_OK)
-	     {
-	         // Check if the received command starts with 'r'
-	         if (strncmp((char *)rxBuffer, "r", 1) == 0)
-	         {
-	             // Reset all outputs (custom function you defined)
-	             reset_outputs();
-	         }
-	         // Check if the command starts with 'd'
-	         else if (strncmp((char *)rxBuffer, "d", 1) == 0)
-	         {
-	             // Handle inputs (custom function you defined)
-	             handle_inputs();
-	             continue;
-	         }
-	         // Check if the command starts with 's'
-	         else if (strncmp((char *)rxBuffer, "s", 1) == 0)
-	         {
-	             // Extract the pin and state from the received buffer
-	             char pin = rxBuffer[1];   // Second character specifies the pin
-	             char state = rxBuffer[2]; // Third character specifies the state
-
-	             // Set the output based on the received pin and state
-	             set_output(pin, state);
-	         }
-	         else
-	         {
-	             // Transmit an error message if the command is unknown
-	             HAL_UART_Transmit(&huart3, "Unknown\n", 8, HAL_MAX_DELAY);
-	             continue;
-	         }
-	     }
-
-	     HAL_UART_Transmit(&huart3, rxBuffer, 5, HAL_MAX_DELAY);
-  }
-  /* USER CODE END WHILE */
-
-  /* USER CODE BEGIN 3 */
+                // Validate pin and state
+                if ((pin == '0' || pin == '1') && (state == '0' || state == '1')) {
+                    set_output(pin, state);
+                    HAL_UART_Transmit(&huart3, (uint8_t *)"Output Set\n", 11, HAL_MAX_DELAY);
+                } else {
+                    HAL_UART_Transmit(&huart3, (uint8_t *)"Invalid sXY Format\n", 20, HAL_MAX_DELAY);
+                }
+            } else {
+                HAL_UART_Transmit(&huart3, (uint8_t *)"Unknown Command\n", 17, HAL_MAX_DELAY);
+            }
+            command_ready_flag = 0;
+        }
+    }
 }
-  /* USER CODE END 3 */
+
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
+{
+    static uint8_t rx_index = 0;
+
+    if (huart->Instance == USART3) {
+        char received_char = rx_buffer[0];
+
+        if (received_char == '\n' || received_char == '\r') {
+            command_buffer[rx_index] = '\0';
+            command_ready_flag = 1;
+            rx_index = 0;
+        } else if (rx_index < RX_BUFFER_SIZE - 1) {
+            command_buffer[rx_index++] = received_char;
+        } else {
+            rx_index = 0;
+        }
+
+        HAL_UART_Receive_IT(&huart3, (uint8_t *)rx_buffer, 1);
+    }
+}
 
 /**
   * @brief System Clock Configuration
@@ -296,12 +224,58 @@ void SystemClock_Config(void)
 }
 
 /**
+  * @brief USART2 Initialization Function
+  * @param None
+  * @retval None
+
+
+  */
+
+/*
+static void MX_USART2_UART_Init(void)
+{
+
+  /* USER CODE BEGIN USART2_Init 0 */
+
+  /* USER CODE END USART2_Init 0 */
+
+  /* USER CODE BEGIN USART2_Init 1 */
+
+  /* USER CODE END USART2_Init 1 */ /*
+  huart2.Instance = USART2;
+  huart2.Init.BaudRate = 115200;
+  huart2.Init.WordLength = UART_WORDLENGTH_8B;
+  huart2.Init.StopBits = UART_STOPBITS_1;
+  huart2.Init.Parity = UART_PARITY_NONE;
+  huart2.Init.Mode = UART_MODE_TX_RX;
+  huart2.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+  huart2.Init.OverSampling = UART_OVERSAMPLING_16;
+  if (HAL_UART_Init(&huart2) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN USART2_Init 2 */
+
+  /* USER CODE END USART2_Init 2 */
+/*
+}
+*/
+
+/**
   * @brief USART3 Initialization Function
   * @param None
   * @retval None
   */
 static void MX_USART3_UART_Init(void)
 {
+
+  /* USER CODE BEGIN USART3_Init 0 */
+
+  /* USER CODE END USART3_Init 0 */
+
+  /* USER CODE BEGIN USART3_Init 1 */
+
+  /* USER CODE END USART3_Init 1 */
   huart3.Instance = USART3;
   huart3.Init.BaudRate = 115200;
   huart3.Init.WordLength = UART_WORDLENGTH_8B;
@@ -314,6 +288,10 @@ static void MX_USART3_UART_Init(void)
   {
     Error_Handler();
   }
+  /* USER CODE BEGIN USART3_Init 2 */
+
+  /* USER CODE END USART3_Init 2 */
+
 }
 
 /**
@@ -324,16 +302,39 @@ static void MX_USART3_UART_Init(void)
 static void MX_GPIO_Init(void)
 {
   GPIO_InitTypeDef GPIO_InitStruct = {0};
+/* USER CODE BEGIN MX_GPIO_Init_1 */
+/* USER CODE END MX_GPIO_Init_1 */
 
   /* GPIO Ports Clock Enable */
   __HAL_RCC_GPIOC_CLK_ENABLE();
   __HAL_RCC_GPIOH_CLK_ENABLE();
+  __HAL_RCC_GPIOA_CLK_ENABLE();
+  __HAL_RCC_GPIOB_CLK_ENABLE();
 
-  /*Configure GPIO pins : PC0 PC1 */
-  GPIO_InitStruct.Pin = GPIO_PIN_0|GPIO_PIN_1;
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_8|GPIO_PIN_9, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin : B1_Pin */
+  GPIO_InitStruct.Pin = B1_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(B1_GPIO_Port, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : PC1 PC2 */
+  GPIO_InitStruct.Pin = GPIO_PIN_1|GPIO_PIN_2;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : LD2_Pin */
+  GPIO_InitStruct.Pin = LD2_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(LD2_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pins : PC8 PC9 */
   GPIO_InitStruct.Pin = GPIO_PIN_8|GPIO_PIN_9;
@@ -341,7 +342,14 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
+
+/* USER CODE BEGIN MX_GPIO_Init_2 */
+/* USER CODE END MX_GPIO_Init_2 */
 }
+
+/* USER CODE BEGIN 4 */
+
+/* USER CODE END 4 */
 
 /**
   * @brief  This function is executed in case of error occurrence.
@@ -349,10 +357,28 @@ static void MX_GPIO_Init(void)
   */
 void Error_Handler(void)
 {
+  /* USER CODE BEGIN Error_Handler_Debug */
+  /* User can add his own implementation to report the HAL error return state */
   __disable_irq();
   while (1)
   {
   }
+  /* USER CODE END Error_Handler_Debug */
 }
 
-
+#ifdef  USE_FULL_ASSERT
+/**
+  * @brief  Reports the name of the source file and the source line number
+  *         where the assert_param error has occurred.
+  * @param  file: pointer to the source file name
+  * @param  line: assert_param error line source number
+  * @retval None
+  */
+void assert_failed(uint8_t *file, uint32_t line)
+{
+  /* USER CODE BEGIN 6 */
+  /* User can add his own implementation to report the file name and line number,
+     ex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
+  /* USER CODE END 6 */
+}
+#endif /* USE_FULL_ASSERT */

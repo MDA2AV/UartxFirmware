@@ -1227,3 +1227,80 @@ Finished building: default.size.stdout
  
 Finished building: Uartronica_Control_Board.list
  
+09:07:27 **** Build of configuration Debug for project Uartronica_Control_Board ****
+make -j4 all 
+arm-none-eabi-gcc "../Core/Src/main.c" -mcpu=cortex-m4 -std=gnu11 -g3 -DDEBUG -DUSE_HAL_DRIVER -DSTM32F446xx -c -I../Core/Inc -I../Drivers/STM32F4xx_HAL_Driver/Inc -I../Drivers/STM32F4xx_HAL_Driver/Inc/Legacy -I../Drivers/CMSIS/Device/ST/STM32F4xx/Include -I../Drivers/CMSIS/Include -O0 -ffunction-sections -fdata-sections -Wall -fstack-usage -fcyclomatic-complexity -MMD -MP -MF"Core/Src/main.d" -MT"Core/Src/main.o" --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -o "Core/Src/main.o"
+../Core/Src/main.c: In function 'main':
+../Core/Src/main.c:238:49: warning: pointer targets in passing argument 2 of 'HAL_UART_Transmit' differ in signedness [-Wpointer-sign]
+  238 |                      HAL_UART_Transmit(&huart3, "Unknown\n", 8, HAL_MAX_DELAY);
+      |                                                 ^~~~~~~~~~~
+      |                                                 |
+      |                                                 char *
+In file included from ../Core/Inc/stm32f4xx_hal_conf.h:411,
+                 from ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal.h:29,
+                 from ../Core/Inc/main.h:30,
+                 from ../Core/Src/main.c:20:
+../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_uart.h:745:79: note: expected 'const uint8_t *' {aka 'const unsigned char *'} but argument is of type 'char *'
+  745 | HAL_StatusTypeDef HAL_UART_Transmit(UART_HandleTypeDef *huart, const uint8_t *pData, uint16_t Size, uint32_t Timeout);
+      |                                                                ~~~~~~~~~~~~~~~^~~~~
+arm-none-eabi-gcc -o "Uartronica_Control_Board.elf" @"objects.list"   -mcpu=cortex-m4 -T"C:\Users\Admin.ONTPC12\Desktop\UartxFirmwareRepo\UartxFirmware\Uartronica_Control_Board\STM32F446RETX_FLASH.ld" --specs=nosys.specs -Wl,-Map="Uartronica_Control_Board.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
+Finished building target: Uartronica_Control_Board.elf
+ 
+arm-none-eabi-size  Uartronica_Control_Board.elf 
+arm-none-eabi-objdump -h -S Uartronica_Control_Board.elf  > "Uartronica_Control_Board.list"
+   text	   data	    bss	    dec	    hex	filename
+  12660	     92	   2076	  14828	   39ec	Uartronica_Control_Board.elf
+Finished building: default.size.stdout
+ 
+Finished building: Uartronica_Control_Board.list
+ 
+09:10:54 **** Incremental Build of configuration Debug for project Uartronica_Control_Board ****
+make -j4 all 
+arm-none-eabi-size  Uartronica_Control_Board.elf 
+   text	   data	    bss	    dec	    hex	filename
+  12660	     92	   2076	  14828	   39ec	Uartronica_Control_Board.elf
+Finished building: default.size.stdout
+ 
+09:14:53 **** Build of configuration Debug for project Uartronica_Control_Board ****
+make -j4 all 
+arm-none-eabi-size  Uartronica_Control_Board.elf 
+   text	   data	    bss	    dec	    hex	filename
+  12660	     92	   2076	  14828	   39ec	Uartronica_Control_Board.elf
+Finished building: default.size.stdout
+ 
+19:21:13 **** Incremental Build of configuration Debug for project Uartronica_Control_Board ****
+make -j4 all 
+arm-none-eabi-gcc "../Core/Src/main.c" -mcpu=cortex-m4 -std=gnu11 -g3 -DDEBUG -DUSE_HAL_DRIVER -DSTM32F446xx -c -I../Core/Inc -I../Drivers/STM32F4xx_HAL_Driver/Inc -I../Drivers/STM32F4xx_HAL_Driver/Inc/Legacy -I../Drivers/CMSIS/Device/ST/STM32F4xx/Include -I../Drivers/CMSIS/Include -O0 -ffunction-sections -fdata-sections -Wall -fstack-usage -fcyclomatic-complexity -MMD -MP -MF"Core/Src/main.d" -MT"Core/Src/main.o" --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -o "Core/Src/main.o"
+arm-none-eabi-gcc "../Core/Src/stm32f4xx_hal_msp.c" -mcpu=cortex-m4 -std=gnu11 -g3 -DDEBUG -DUSE_HAL_DRIVER -DSTM32F446xx -c -I../Core/Inc -I../Drivers/STM32F4xx_HAL_Driver/Inc -I../Drivers/STM32F4xx_HAL_Driver/Inc/Legacy -I../Drivers/CMSIS/Device/ST/STM32F4xx/Include -I../Drivers/CMSIS/Include -O0 -ffunction-sections -fdata-sections -Wall -fstack-usage -fcyclomatic-complexity -MMD -MP -MF"Core/Src/stm32f4xx_hal_msp.d" -MT"Core/Src/stm32f4xx_hal_msp.o" --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -o "Core/Src/stm32f4xx_hal_msp.o"
+arm-none-eabi-gcc "../Core/Src/stm32f4xx_it.c" -mcpu=cortex-m4 -std=gnu11 -g3 -DDEBUG -DUSE_HAL_DRIVER -DSTM32F446xx -c -I../Core/Inc -I../Drivers/STM32F4xx_HAL_Driver/Inc -I../Drivers/STM32F4xx_HAL_Driver/Inc/Legacy -I../Drivers/CMSIS/Device/ST/STM32F4xx/Include -I../Drivers/CMSIS/Include -O0 -ffunction-sections -fdata-sections -Wall -fstack-usage -fcyclomatic-complexity -MMD -MP -MF"Core/Src/stm32f4xx_it.d" -MT"Core/Src/stm32f4xx_it.o" --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -o "Core/Src/stm32f4xx_it.o"
+arm-none-eabi-gcc -o "Uartronica_Control_Board.elf" @"objects.list"   -mcpu=cortex-m4 -T"C:\Users\Admin.ONTPC12\Desktop\UartxFirmwareRepo\UartxFirmware\Uartronica_Control_Board\STM32F446RETX_FLASH.ld" --specs=nosys.specs -Wl,-Map="Uartronica_Control_Board.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
+Finished building target: Uartronica_Control_Board.elf
+ 
+arm-none-eabi-size  Uartronica_Control_Board.elf 
+arm-none-eabi-objdump -h -S Uartronica_Control_Board.elf  > "Uartronica_Control_Board.list"
+   text	   data	    bss	    dec	    hex	filename
+  11380	     12	   1716	  13108	   3334	Uartronica_Control_Board.elf
+Finished building: default.size.stdout
+ 
+Finished building: Uartronica_Control_Board.list
+ 
+19:21:35 **** Incremental Build of configuration Debug for project Uartronica_Control_Board ****
+make -j4 all 
+arm-none-eabi-gcc "../Core/Src/main.c" -mcpu=cortex-m4 -std=gnu11 -g3 -DDEBUG -DUSE_HAL_DRIVER -DSTM32F446xx -c -I../Core/Inc -I../Drivers/STM32F4xx_HAL_Driver/Inc -I../Drivers/STM32F4xx_HAL_Driver/Inc/Legacy -I../Drivers/CMSIS/Device/ST/STM32F4xx/Include -I../Drivers/CMSIS/Include -O0 -ffunction-sections -fdata-sections -Wall -fstack-usage -fcyclomatic-complexity -MMD -MP -MF"Core/Src/main.d" -MT"Core/Src/main.o" --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -o "Core/Src/main.o"
+../Core/Src/main.c:238:3: warning: "/*" within comment [-Wcomment]
+  238 |   /* USER CODE BEGIN USART2_Init 0 */
+      |    
+../Core/Src/main.c:257:3: warning: "/*" within comment [-Wcomment]
+  257 |   /* USER CODE BEGIN USART2_Init 2 */
+      |    
+arm-none-eabi-gcc -o "Uartronica_Control_Board.elf" @"objects.list"   -mcpu=cortex-m4 -T"C:\Users\Admin.ONTPC12\Desktop\UartxFirmwareRepo\UartxFirmware\Uartronica_Control_Board\STM32F446RETX_FLASH.ld" --specs=nosys.specs -Wl,-Map="Uartronica_Control_Board.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
+Finished building target: Uartronica_Control_Board.elf
+ 
+arm-none-eabi-size  Uartronica_Control_Board.elf 
+arm-none-eabi-objdump -h -S Uartronica_Control_Board.elf  > "Uartronica_Control_Board.list"
+   text	   data	    bss	    dec	    hex	filename
+  15408	     92	   2084	  17584	   44b0	Uartronica_Control_Board.elf
+Finished building: default.size.stdout
+ 
+Finished building: Uartronica_Control_Board.list
+ 
