@@ -66,46 +66,6 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart);
 /* USER CODE BEGIN 0 */
 
 /**
- * @brief UART receive complete callback.
- *
- * This callback is triggered when a UART receive interrupt occurs for USART3. It processes incoming
- * characters and builds a command string. When a newline ('\n') or carriage return ('\r') is received,
- * the command is considered complete, and the `command_ready_flag` is set.
- *
- * Function behavior:
- * - Characters are appended to `command_buffer` until a newline ('\n') or carriage return ('\r') is received.
- * - If the received character completes a command, the buffer is null-terminated, and the `command_ready_flag` is set.
- * - If the buffer overflows, the index is reset to prevent overwriting memory.
- * - After processing the character, UART interrupt reception is re-enabled.
- *
- * @param huart Pointer to the UART handle that triggered the callback.
- *
- * @note This function assumes that `rx_buffer`, `command_buffer`, `command_ready_flag`, and `RX_BUFFER_SIZE`
- *       are properly defined and initialized elsewhere in the program.
- */
-void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
-{
-    static uint8_t rx_index = 0; // Index for tracking position in the command buffer.
-
-    if (huart->Instance == USART3) { // Ensure the callback is for USART3.
-        char received_char = rx_buffer[0]; // Retrieve the received character.
-
-        if (received_char == '\n' || received_char == '\r') {
-            command_buffer[rx_index] = '\0'; // Null-terminate the command string.
-            command_ready_flag = 1;         // Signal that a complete command is ready to process.
-            rx_index = 0;                   // Reset the index for the next command.
-        } else if (rx_index < RX_BUFFER_SIZE - 1) {
-            command_buffer[rx_index++] = received_char; // Append the character to the command buffer.
-        } else {
-            rx_index = 0; // Reset the index if the buffer overflows.
-        }
-
-        // Re-enable UART interrupt reception for the next character.
-        HAL_UART_Receive_IT(&huart3, (uint8_t *)rx_buffer, 1);
-    }
-}
-
-/**
  * @brief Resets the output state of GPIO pins.
  */
 void reset_outputs(void)
@@ -115,70 +75,42 @@ void reset_outputs(void)
 
 /**
  * @brief Handles input from sensors and transmits a corresponding value over UART.
- *
- * This function reads the state of two sensors connected to GPIO pins, determines a specific output
- * value based on their states, and sends this value as a character over UART. The output is encoded
- * as follows:
- *
- * - '0': Both sensors are in the GPIO_PIN_RESET state.
- * - '1': Sensor 1 is GPIO_PIN_RESET and Sensor 2 is GPIO_PIN_SET.
- * - '2': Sensor 1 is GPIO_PIN_SET and Sensor 2 is GPIO_PIN_RESET.
- * - '3': Both sensors are in the GPIO_PIN_SET state.
- *
- * The transmitted character is followed by a newline character for readability.
- *
- * @note The function assumes that HAL_UART_Transmit and HAL_GPIO_ReadPin are properly initialized and functional.
  */
 void handle_inputs(void)
 {
-    uint8_t sensor1 = HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_0); // Read the state of Sensor 1.
-    uint8_t sensor2 = HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_1); // Read the state of Sensor 2.
+    uint8_t sensor1 = HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_0);
+    uint8_t sensor2 = HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_1);
 
     char output;
     if (sensor1 == GPIO_PIN_RESET && sensor2 == GPIO_PIN_RESET)
-        output = '0'; // Both sensors are inactive.
+        output = '0';
     else if (sensor1 == GPIO_PIN_RESET && sensor2 == GPIO_PIN_SET)
-        output = '1'; // Sensor 1 inactive, Sensor 2 active.
+        output = '1';
     else if (sensor1 == GPIO_PIN_SET && sensor2 == GPIO_PIN_RESET)
-        output = '2'; // Sensor 1 active, Sensor 2 inactive.
+        output = '2';
     else
-        output = '3'; // Both sensors are active.
+        output = '3';
 
     char response[3];
-    snprintf(response, sizeof(response), "%c\n", output); // Format the output with a newline.
-    HAL_UART_Transmit(&huart3, (uint8_t *)response, strlen(response), HAL_MAX_DELAY); // Transmit the response over UART.
+    snprintf(response, sizeof(response), "%c\n", output);
+    HAL_UART_Transmit(&huart3, (uint8_t *)response, strlen(response), HAL_MAX_DELAY);
 }
 
 /**
  * @brief Controls the output state of specific GPIO pins based on input parameters.
- *
- * This function sets the state of GPIO pins based on the provided `pin` and `state` parameters.
- * The function supports two pins ('0' and '1') and two states ('1' for GPIO_PIN_SET and '0' for GPIO_PIN_RESET).
- *
- * Function behavior:
- * - If `pin` is '0' and `state` is '1', GPIO_PIN_8 is set to GPIO_PIN_SET.
- * - If `pin` is '0' and `state` is '0', GPIO_PIN_8 is set to GPIO_PIN_RESET.
- * - If `pin` is '1' and `state` is '1', GPIO_PIN_9 is set to GPIO_PIN_SET.
- * - If `pin` is '1' and `state` is '0', GPIO_PIN_9 is set to GPIO_PIN_RESET.
- *
- * @param pin The pin identifier ('0' or '1').
- * @param state The desired state ('1' for GPIO_PIN_SET, '0' for GPIO_PIN_RESET).
- *
- * @note This function assumes that HAL_GPIO_WritePin is properly initialized and functional, and
- *       the GPIO pins GPIO_PIN_8 and GPIO_PIN_9 are configured as output pins.
  */
 void set_output(char pin, char state)
 {
     if (pin == '0') {
         if (state == '1')
-            HAL_GPIO_WritePin(GPIOC, GPIO_PIN_8, GPIO_PIN_SET); // Set GPIO_PIN_8 to high.
+            HAL_GPIO_WritePin(GPIOC, GPIO_PIN_8, GPIO_PIN_SET);
         else if (state == '0')
-            HAL_GPIO_WritePin(GPIOC, GPIO_PIN_8, GPIO_PIN_RESET); // Set GPIO_PIN_8 to low.
+            HAL_GPIO_WritePin(GPIOC, GPIO_PIN_8, GPIO_PIN_RESET);
     } else if (pin == '1') {
         if (state == '1')
-            HAL_GPIO_WritePin(GPIOC, GPIO_PIN_9, GPIO_PIN_SET); // Set GPIO_PIN_9 to high.
+            HAL_GPIO_WritePin(GPIOC, GPIO_PIN_9, GPIO_PIN_SET);
         else if (state == '0')
-            HAL_GPIO_WritePin(GPIOC, GPIO_PIN_9, GPIO_PIN_RESET); // Set GPIO_PIN_9 to low.
+            HAL_GPIO_WritePin(GPIOC, GPIO_PIN_9, GPIO_PIN_RESET);
     }
 }
 
@@ -186,53 +118,61 @@ void set_output(char pin, char state)
 
 /**
   * @brief  The application entry point.
-  *
-  * This function initializes the system and enters an infinite loop to handle UART commands.
-  * The application supports the following commands:
-  *
-  * - "r": Resets all outputs to their default state and sends a confirmation message.
-  * - "d": Reads inputs from sensors and transmits their corresponding state via UART.
-  * - "sXY": Sets the output state of a specific pin.
-  *     - X specifies the pin ('0' or '1').
-  *     - Y specifies the state ('0' for GPIO_PIN_RESET, '1' for GPIO_PIN_SET).
-  *     - Example: "s01" sets pin '0' to GPIO_PIN_SET.
-  *
-  * Invalid or unrecognized commands return an "Unknown Command" message.
-  *
-  * @retval int Always returns 0 (application does not terminate).
+  * @retval int
   */
 int main(void)
 {
-    HAL_Init();                           // Initialize the HAL library.
-    SystemClock_Config();                 // Configure the system clock.
-    MX_GPIO_Init();                       // Initialize GPIO pins.
-    MX_USART3_UART_Init();                // Initialize UART3 for communication.
+    HAL_Init();
+    SystemClock_Config();
+    MX_GPIO_Init();
+    MX_USART3_UART_Init();
 
-    HAL_UART_Receive_IT(&huart3, (uint8_t *)rx_buffer, 1); // Enable UART reception in interrupt mode.
+    HAL_UART_Receive_IT(&huart3, (uint8_t *)rx_buffer, 1);
 
     while (1) {
-        if (command_ready_flag) {         // Check if a command has been received and is ready to process.
+        if (command_ready_flag) {
             if (strcmp(command_buffer, "r") == 0) {
-                reset_outputs();          // Reset all outputs to their default state.
-                HAL_UART_Transmit(&huart3, (uint8_t *)"Outputs Reset\n", 15, HAL_MAX_DELAY); // Confirm reset.
+                reset_outputs();
+                HAL_UART_Transmit(&huart3, (uint8_t *)"Outputs Reset\n", 15, HAL_MAX_DELAY);
             } else if (strcmp(command_buffer, "d") == 0) {
-                handle_inputs();          // Handle sensor inputs and transmit their state via UART.
+                handle_inputs();
             } else if (strncmp(command_buffer, "s", 1) == 0 && strlen(command_buffer) == 3) {
-                char pin = command_buffer[1];   // Extract the pin identifier from the command.
-                char state = command_buffer[2]; // Extract the state from the command.
+                char pin = command_buffer[1];   // Second character specifies the pin
+                char state = command_buffer[2]; // Third character specifies the state
 
-                // Validate pin and state.
+                // Validate pin and state
                 if ((pin == '0' || pin == '1') && (state == '0' || state == '1')) {
-                    set_output(pin, state);     // Set the specified output pin to the desired state.
-                    HAL_UART_Transmit(&huart3, (uint8_t *)"Output Set\n", 11, HAL_MAX_DELAY); // Confirm action.
+                    set_output(pin, state);
+                    HAL_UART_Transmit(&huart3, (uint8_t *)"Output Set\n", 11, HAL_MAX_DELAY);
                 } else {
-                    HAL_UART_Transmit(&huart3, (uint8_t *)"Invalid sXY Format\n", 20, HAL_MAX_DELAY); // Invalid format.
+                    HAL_UART_Transmit(&huart3, (uint8_t *)"Invalid sXY Format\n", 20, HAL_MAX_DELAY);
                 }
             } else {
-                HAL_UART_Transmit(&huart3, (uint8_t *)"Unknown Command\n", 17, HAL_MAX_DELAY); // Unrecognized command.
+                HAL_UART_Transmit(&huart3, (uint8_t *)"Unknown Command\n", 17, HAL_MAX_DELAY);
             }
-            command_ready_flag = 0;       // Reset the command ready flag after processing.
+            command_ready_flag = 0;
         }
+    }
+}
+
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
+{
+    static uint8_t rx_index = 0;
+
+    if (huart->Instance == USART3) {
+        char received_char = rx_buffer[0];
+
+        if (received_char == '\n' || received_char == '\r') {
+            command_buffer[rx_index] = '\0';
+            command_ready_flag = 1;
+            rx_index = 0;
+        } else if (rx_index < RX_BUFFER_SIZE - 1) {
+            command_buffer[rx_index++] = received_char;
+        } else {
+            rx_index = 0;
+        }
+
+        HAL_UART_Receive_IT(&huart3, (uint8_t *)rx_buffer, 1);
     }
 }
 

@@ -2456,20 +2456,20 @@ LOAD C:/ST/STM32CubeIDE_1.17.0/STM32CubeIDE/plugins/com.st.stm32cube.ide.mcu.ext
                 0x080005cc                __aeabi_idiv0
                 0x080005cc                __aeabi_ldiv0
  *(.text*)
- .text.reset_outputs
-                0x080005d0       0x18 ./Core/Src/main.o
-                0x080005d0                reset_outputs
- .text.handle_inputs
-                0x080005e8       0x90 ./Core/Src/main.o
-                0x080005e8                handle_inputs
- .text.set_output
-                0x08000678       0x78 ./Core/Src/main.o
-                0x08000678                set_output
- .text.main     0x080006f0      0x10c ./Core/Src/main.o
-                0x080006f0                main
  .text.HAL_UART_RxCpltCallback
-                0x080007fc       0x8c ./Core/Src/main.o
-                0x080007fc                HAL_UART_RxCpltCallback
+                0x080005d0       0x8c ./Core/Src/main.o
+                0x080005d0                HAL_UART_RxCpltCallback
+ .text.reset_outputs
+                0x0800065c       0x18 ./Core/Src/main.o
+                0x0800065c                reset_outputs
+ .text.handle_inputs
+                0x08000674       0x90 ./Core/Src/main.o
+                0x08000674                handle_inputs
+ .text.set_output
+                0x08000704       0x78 ./Core/Src/main.o
+                0x08000704                set_output
+ .text.main     0x0800077c      0x10c ./Core/Src/main.o
+                0x0800077c                main
  .text.SystemClock_Config
                 0x08000888       0xdc ./Core/Src/main.o
                 0x08000888                SystemClock_Config

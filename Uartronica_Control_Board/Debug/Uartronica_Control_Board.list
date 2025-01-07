@@ -424,423 +424,424 @@ Disassembly of section .text:
  80005cc:	4770      	bx	lr
  80005ce:	bf00      	nop
 
-080005d0 <reset_outputs>:
+080005d0 <HAL_UART_RxCpltCallback>:
+ *
+ * @note This function assumes that `rx_buffer`, `command_buffer`, `command_ready_flag`, and `RX_BUFFER_SIZE`
+ *       are properly defined and initialized elsewhere in the program.
+ */
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
+{
+ 80005d0:	b580      	push	{r7, lr}
+ 80005d2:	b084      	sub	sp, #16
+ 80005d4:	af00      	add	r7, sp, #0
+ 80005d6:	6078      	str	r0, [r7, #4]
+    static uint8_t rx_index = 0; // Index for tracking position in the command buffer.
+
+    if (huart->Instance == USART3) { // Ensure the callback is for USART3.
+ 80005d8:	687b      	ldr	r3, [r7, #4]
+ 80005da:	681b      	ldr	r3, [r3, #0]
+ 80005dc:	4a19      	ldr	r2, [pc, #100]	@ (8000644 <HAL_UART_RxCpltCallback+0x74>)
+ 80005de:	4293      	cmp	r3, r2
+ 80005e0:	d12c      	bne.n	800063c <HAL_UART_RxCpltCallback+0x6c>
+        char received_char = rx_buffer[0]; // Retrieve the received character.
+ 80005e2:	4b19      	ldr	r3, [pc, #100]	@ (8000648 <HAL_UART_RxCpltCallback+0x78>)
+ 80005e4:	781b      	ldrb	r3, [r3, #0]
+ 80005e6:	73fb      	strb	r3, [r7, #15]
+
+        if (received_char == '\n' || received_char == '\r') {
+ 80005e8:	7bfb      	ldrb	r3, [r7, #15]
+ 80005ea:	2b0a      	cmp	r3, #10
+ 80005ec:	d002      	beq.n	80005f4 <HAL_UART_RxCpltCallback+0x24>
+ 80005ee:	7bfb      	ldrb	r3, [r7, #15]
+ 80005f0:	2b0d      	cmp	r3, #13
+ 80005f2:	d10c      	bne.n	800060e <HAL_UART_RxCpltCallback+0x3e>
+            command_buffer[rx_index] = '\0'; // Null-terminate the command string.
+ 80005f4:	4b15      	ldr	r3, [pc, #84]	@ (800064c <HAL_UART_RxCpltCallback+0x7c>)
+ 80005f6:	781b      	ldrb	r3, [r3, #0]
+ 80005f8:	461a      	mov	r2, r3
+ 80005fa:	4b15      	ldr	r3, [pc, #84]	@ (8000650 <HAL_UART_RxCpltCallback+0x80>)
+ 80005fc:	2100      	movs	r1, #0
+ 80005fe:	5499      	strb	r1, [r3, r2]
+            command_ready_flag = 1;         // Signal that a complete command is ready to process.
+ 8000600:	4b14      	ldr	r3, [pc, #80]	@ (8000654 <HAL_UART_RxCpltCallback+0x84>)
+ 8000602:	2201      	movs	r2, #1
+ 8000604:	701a      	strb	r2, [r3, #0]
+            rx_index = 0;                   // Reset the index for the next command.
+ 8000606:	4b11      	ldr	r3, [pc, #68]	@ (800064c <HAL_UART_RxCpltCallback+0x7c>)
+ 8000608:	2200      	movs	r2, #0
+ 800060a:	701a      	strb	r2, [r3, #0]
+ 800060c:	e011      	b.n	8000632 <HAL_UART_RxCpltCallback+0x62>
+        } else if (rx_index < RX_BUFFER_SIZE - 1) {
+ 800060e:	4b0f      	ldr	r3, [pc, #60]	@ (800064c <HAL_UART_RxCpltCallback+0x7c>)
+ 8000610:	781b      	ldrb	r3, [r3, #0]
+ 8000612:	2b62      	cmp	r3, #98	@ 0x62
+ 8000614:	d80a      	bhi.n	800062c <HAL_UART_RxCpltCallback+0x5c>
+            command_buffer[rx_index++] = received_char; // Append the character to the command buffer.
+ 8000616:	4b0d      	ldr	r3, [pc, #52]	@ (800064c <HAL_UART_RxCpltCallback+0x7c>)
+ 8000618:	781b      	ldrb	r3, [r3, #0]
+ 800061a:	1c5a      	adds	r2, r3, #1
+ 800061c:	b2d1      	uxtb	r1, r2
+ 800061e:	4a0b      	ldr	r2, [pc, #44]	@ (800064c <HAL_UART_RxCpltCallback+0x7c>)
+ 8000620:	7011      	strb	r1, [r2, #0]
+ 8000622:	4619      	mov	r1, r3
+ 8000624:	4a0a      	ldr	r2, [pc, #40]	@ (8000650 <HAL_UART_RxCpltCallback+0x80>)
+ 8000626:	7bfb      	ldrb	r3, [r7, #15]
+ 8000628:	5453      	strb	r3, [r2, r1]
+ 800062a:	e002      	b.n	8000632 <HAL_UART_RxCpltCallback+0x62>
+        } else {
+            rx_index = 0; // Reset the index if the buffer overflows.
+ 800062c:	4b07      	ldr	r3, [pc, #28]	@ (800064c <HAL_UART_RxCpltCallback+0x7c>)
+ 800062e:	2200      	movs	r2, #0
+ 8000630:	701a      	strb	r2, [r3, #0]
+        }
+
+        // Re-enable UART interrupt reception for the next character.
+        HAL_UART_Receive_IT(&huart3, (uint8_t *)rx_buffer, 1);
+ 8000632:	2201      	movs	r2, #1
+ 8000634:	4904      	ldr	r1, [pc, #16]	@ (8000648 <HAL_UART_RxCpltCallback+0x78>)
+ 8000636:	4808      	ldr	r0, [pc, #32]	@ (8000658 <HAL_UART_RxCpltCallback+0x88>)
+ 8000638:	f001 fe6d 	bl	8002316 <HAL_UART_Receive_IT>
+    }
+}
+ 800063c:	bf00      	nop
+ 800063e:	3710      	adds	r7, #16
+ 8000640:	46bd      	mov	sp, r7
+ 8000642:	bd80      	pop	{r7, pc}
+ 8000644:	40004800 	.word	0x40004800
+ 8000648:	200000c0 	.word	0x200000c0
+ 800064c:	20000129 	.word	0x20000129
+ 8000650:	200000c4 	.word	0x200000c4
+ 8000654:	20000128 	.word	0x20000128
+ 8000658:	20000078 	.word	0x20000078
+
+0800065c <reset_outputs>:
 
 /**
  * @brief Resets the output state of GPIO pins.
  */
 void reset_outputs(void)
 {
- 80005d0:	b580      	push	{r7, lr}
- 80005d2:	af00      	add	r7, sp, #0
+ 800065c:	b580      	push	{r7, lr}
+ 800065e:	af00      	add	r7, sp, #0
     HAL_GPIO_WritePin(GPIOC, GPIO_PIN_8 | GPIO_PIN_9, GPIO_PIN_RESET);
- 80005d4:	2200      	movs	r2, #0
- 80005d6:	f44f 7140 	mov.w	r1, #768	@ 0x300
- 80005da:	4802      	ldr	r0, [pc, #8]	@ (80005e4 <reset_outputs+0x14>)
- 80005dc:	f000 ffbe 	bl	800155c <HAL_GPIO_WritePin>
+ 8000660:	2200      	movs	r2, #0
+ 8000662:	f44f 7140 	mov.w	r1, #768	@ 0x300
+ 8000666:	4802      	ldr	r0, [pc, #8]	@ (8000670 <reset_outputs+0x14>)
+ 8000668:	f000 ff78 	bl	800155c <HAL_GPIO_WritePin>
 }
- 80005e0:	bf00      	nop
- 80005e2:	bd80      	pop	{r7, pc}
- 80005e4:	40020800 	.word	0x40020800
+ 800066c:	bf00      	nop
+ 800066e:	bd80      	pop	{r7, pc}
+ 8000670:	40020800 	.word	0x40020800
 
-080005e8 <handle_inputs>:
-
-/**
- * @brief Handles input from sensors and transmits a corresponding value over UART.
+08000674 <handle_inputs>:
+ * The transmitted character is followed by a newline character for readability.
+ *
+ * @note The function assumes that HAL_UART_Transmit and HAL_GPIO_ReadPin are properly initialized and functional.
  */
 void handle_inputs(void)
 {
- 80005e8:	b580      	push	{r7, lr}
- 80005ea:	b082      	sub	sp, #8
- 80005ec:	af00      	add	r7, sp, #0
-    uint8_t sensor1 = HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_0);
- 80005ee:	2101      	movs	r1, #1
- 80005f0:	481e      	ldr	r0, [pc, #120]	@ (800066c <handle_inputs+0x84>)
- 80005f2:	f000 ff9b 	bl	800152c <HAL_GPIO_ReadPin>
- 80005f6:	4603      	mov	r3, r0
- 80005f8:	71bb      	strb	r3, [r7, #6]
-    uint8_t sensor2 = HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_1);
- 80005fa:	2102      	movs	r1, #2
- 80005fc:	481b      	ldr	r0, [pc, #108]	@ (800066c <handle_inputs+0x84>)
- 80005fe:	f000 ff95 	bl	800152c <HAL_GPIO_ReadPin>
- 8000602:	4603      	mov	r3, r0
- 8000604:	717b      	strb	r3, [r7, #5]
+ 8000674:	b580      	push	{r7, lr}
+ 8000676:	b082      	sub	sp, #8
+ 8000678:	af00      	add	r7, sp, #0
+    uint8_t sensor1 = HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_0); // Read the state of Sensor 1.
+ 800067a:	2101      	movs	r1, #1
+ 800067c:	481e      	ldr	r0, [pc, #120]	@ (80006f8 <handle_inputs+0x84>)
+ 800067e:	f000 ff55 	bl	800152c <HAL_GPIO_ReadPin>
+ 8000682:	4603      	mov	r3, r0
+ 8000684:	71bb      	strb	r3, [r7, #6]
+    uint8_t sensor2 = HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_1); // Read the state of Sensor 2.
+ 8000686:	2102      	movs	r1, #2
+ 8000688:	481b      	ldr	r0, [pc, #108]	@ (80006f8 <handle_inputs+0x84>)
+ 800068a:	f000 ff4f 	bl	800152c <HAL_GPIO_ReadPin>
+ 800068e:	4603      	mov	r3, r0
+ 8000690:	717b      	strb	r3, [r7, #5]
 
     char output;
     if (sensor1 == GPIO_PIN_RESET && sensor2 == GPIO_PIN_RESET)
- 8000606:	79bb      	ldrb	r3, [r7, #6]
- 8000608:	2b00      	cmp	r3, #0
- 800060a:	d105      	bne.n	8000618 <handle_inputs+0x30>
- 800060c:	797b      	ldrb	r3, [r7, #5]
- 800060e:	2b00      	cmp	r3, #0
- 8000610:	d102      	bne.n	8000618 <handle_inputs+0x30>
-        output = '0';
- 8000612:	2330      	movs	r3, #48	@ 0x30
- 8000614:	71fb      	strb	r3, [r7, #7]
- 8000616:	e013      	b.n	8000640 <handle_inputs+0x58>
+ 8000692:	79bb      	ldrb	r3, [r7, #6]
+ 8000694:	2b00      	cmp	r3, #0
+ 8000696:	d105      	bne.n	80006a4 <handle_inputs+0x30>
+ 8000698:	797b      	ldrb	r3, [r7, #5]
+ 800069a:	2b00      	cmp	r3, #0
+ 800069c:	d102      	bne.n	80006a4 <handle_inputs+0x30>
+        output = '0'; // Both sensors are inactive.
+ 800069e:	2330      	movs	r3, #48	@ 0x30
+ 80006a0:	71fb      	strb	r3, [r7, #7]
+ 80006a2:	e013      	b.n	80006cc <handle_inputs+0x58>
     else if (sensor1 == GPIO_PIN_RESET && sensor2 == GPIO_PIN_SET)
- 8000618:	79bb      	ldrb	r3, [r7, #6]
- 800061a:	2b00      	cmp	r3, #0
- 800061c:	d105      	bne.n	800062a <handle_inputs+0x42>
- 800061e:	797b      	ldrb	r3, [r7, #5]
- 8000620:	2b01      	cmp	r3, #1
- 8000622:	d102      	bne.n	800062a <handle_inputs+0x42>
-        output = '1';
- 8000624:	2331      	movs	r3, #49	@ 0x31
- 8000626:	71fb      	strb	r3, [r7, #7]
- 8000628:	e00a      	b.n	8000640 <handle_inputs+0x58>
+ 80006a4:	79bb      	ldrb	r3, [r7, #6]
+ 80006a6:	2b00      	cmp	r3, #0
+ 80006a8:	d105      	bne.n	80006b6 <handle_inputs+0x42>
+ 80006aa:	797b      	ldrb	r3, [r7, #5]
+ 80006ac:	2b01      	cmp	r3, #1
+ 80006ae:	d102      	bne.n	80006b6 <handle_inputs+0x42>
+        output = '1'; // Sensor 1 inactive, Sensor 2 active.
+ 80006b0:	2331      	movs	r3, #49	@ 0x31
+ 80006b2:	71fb      	strb	r3, [r7, #7]
+ 80006b4:	e00a      	b.n	80006cc <handle_inputs+0x58>
     else if (sensor1 == GPIO_PIN_SET && sensor2 == GPIO_PIN_RESET)
- 800062a:	79bb      	ldrb	r3, [r7, #6]
- 800062c:	2b01      	cmp	r3, #1
- 800062e:	d105      	bne.n	800063c <handle_inputs+0x54>
- 8000630:	797b      	ldrb	r3, [r7, #5]
- 8000632:	2b00      	cmp	r3, #0
- 8000634:	d102      	bne.n	800063c <handle_inputs+0x54>
-        output = '2';
- 8000636:	2332      	movs	r3, #50	@ 0x32
- 8000638:	71fb      	strb	r3, [r7, #7]
- 800063a:	e001      	b.n	8000640 <handle_inputs+0x58>
+ 80006b6:	79bb      	ldrb	r3, [r7, #6]
+ 80006b8:	2b01      	cmp	r3, #1
+ 80006ba:	d105      	bne.n	80006c8 <handle_inputs+0x54>
+ 80006bc:	797b      	ldrb	r3, [r7, #5]
+ 80006be:	2b00      	cmp	r3, #0
+ 80006c0:	d102      	bne.n	80006c8 <handle_inputs+0x54>
+        output = '2'; // Sensor 1 active, Sensor 2 inactive.
+ 80006c2:	2332      	movs	r3, #50	@ 0x32
+ 80006c4:	71fb      	strb	r3, [r7, #7]
+ 80006c6:	e001      	b.n	80006cc <handle_inputs+0x58>
     else
-        output = '3';
- 800063c:	2333      	movs	r3, #51	@ 0x33
- 800063e:	71fb      	strb	r3, [r7, #7]
+        output = '3'; // Both sensors are active.
+ 80006c8:	2333      	movs	r3, #51	@ 0x33
+ 80006ca:	71fb      	strb	r3, [r7, #7]
 
     char response[3];
-    snprintf(response, sizeof(response), "%c\n", output);
- 8000640:	79fb      	ldrb	r3, [r7, #7]
- 8000642:	4638      	mov	r0, r7
- 8000644:	4a0a      	ldr	r2, [pc, #40]	@ (8000670 <handle_inputs+0x88>)
- 8000646:	2103      	movs	r1, #3
- 8000648:	f002 fde0 	bl	800320c <sniprintf>
-    HAL_UART_Transmit(&huart3, (uint8_t *)response, strlen(response), HAL_MAX_DELAY);
- 800064c:	463b      	mov	r3, r7
- 800064e:	4618      	mov	r0, r3
- 8000650:	f7ff fde8 	bl	8000224 <strlen>
- 8000654:	4603      	mov	r3, r0
- 8000656:	b29a      	uxth	r2, r3
- 8000658:	4639      	mov	r1, r7
- 800065a:	f04f 33ff 	mov.w	r3, #4294967295
- 800065e:	4805      	ldr	r0, [pc, #20]	@ (8000674 <handle_inputs+0x8c>)
- 8000660:	f001 fdce 	bl	8002200 <HAL_UART_Transmit>
+    snprintf(response, sizeof(response), "%c\n", output); // Format the output with a newline.
+ 80006cc:	79fb      	ldrb	r3, [r7, #7]
+ 80006ce:	4638      	mov	r0, r7
+ 80006d0:	4a0a      	ldr	r2, [pc, #40]	@ (80006fc <handle_inputs+0x88>)
+ 80006d2:	2103      	movs	r1, #3
+ 80006d4:	f002 fd9a 	bl	800320c <sniprintf>
+    HAL_UART_Transmit(&huart3, (uint8_t *)response, strlen(response), HAL_MAX_DELAY); // Transmit the response over UART.
+ 80006d8:	463b      	mov	r3, r7
+ 80006da:	4618      	mov	r0, r3
+ 80006dc:	f7ff fda2 	bl	8000224 <strlen>
+ 80006e0:	4603      	mov	r3, r0
+ 80006e2:	b29a      	uxth	r2, r3
+ 80006e4:	4639      	mov	r1, r7
+ 80006e6:	f04f 33ff 	mov.w	r3, #4294967295
+ 80006ea:	4805      	ldr	r0, [pc, #20]	@ (8000700 <handle_inputs+0x8c>)
+ 80006ec:	f001 fd88 	bl	8002200 <HAL_UART_Transmit>
 }
- 8000664:	bf00      	nop
- 8000666:	3708      	adds	r7, #8
- 8000668:	46bd      	mov	sp, r7
- 800066a:	bd80      	pop	{r7, pc}
- 800066c:	40020800 	.word	0x40020800
- 8000670:	08003b8c 	.word	0x08003b8c
- 8000674:	20000078 	.word	0x20000078
+ 80006f0:	bf00      	nop
+ 80006f2:	3708      	adds	r7, #8
+ 80006f4:	46bd      	mov	sp, r7
+ 80006f6:	bd80      	pop	{r7, pc}
+ 80006f8:	40020800 	.word	0x40020800
+ 80006fc:	08003b8c 	.word	0x08003b8c
+ 8000700:	20000078 	.word	0x20000078
 
-08000678 <set_output>:
-
-/**
- * @brief Controls the output state of specific GPIO pins based on input parameters.
+08000704 <set_output>:
+ *
+ * @note This function assumes that HAL_GPIO_WritePin is properly initialized and functional, and
+ *       the GPIO pins GPIO_PIN_8 and GPIO_PIN_9 are configured as output pins.
  */
 void set_output(char pin, char state)
 {
- 8000678:	b580      	push	{r7, lr}
- 800067a:	b082      	sub	sp, #8
- 800067c:	af00      	add	r7, sp, #0
- 800067e:	4603      	mov	r3, r0
- 8000680:	460a      	mov	r2, r1
- 8000682:	71fb      	strb	r3, [r7, #7]
- 8000684:	4613      	mov	r3, r2
- 8000686:	71bb      	strb	r3, [r7, #6]
+ 8000704:	b580      	push	{r7, lr}
+ 8000706:	b082      	sub	sp, #8
+ 8000708:	af00      	add	r7, sp, #0
+ 800070a:	4603      	mov	r3, r0
+ 800070c:	460a      	mov	r2, r1
+ 800070e:	71fb      	strb	r3, [r7, #7]
+ 8000710:	4613      	mov	r3, r2
+ 8000712:	71bb      	strb	r3, [r7, #6]
     if (pin == '0') {
- 8000688:	79fb      	ldrb	r3, [r7, #7]
- 800068a:	2b30      	cmp	r3, #48	@ 0x30
- 800068c:	d113      	bne.n	80006b6 <set_output+0x3e>
+ 8000714:	79fb      	ldrb	r3, [r7, #7]
+ 8000716:	2b30      	cmp	r3, #48	@ 0x30
+ 8000718:	d113      	bne.n	8000742 <set_output+0x3e>
         if (state == '1')
- 800068e:	79bb      	ldrb	r3, [r7, #6]
- 8000690:	2b31      	cmp	r3, #49	@ 0x31
- 8000692:	d106      	bne.n	80006a2 <set_output+0x2a>
-            HAL_GPIO_WritePin(GPIOC, GPIO_PIN_8, GPIO_PIN_SET);
- 8000694:	2201      	movs	r2, #1
- 8000696:	f44f 7180 	mov.w	r1, #256	@ 0x100
- 800069a:	4814      	ldr	r0, [pc, #80]	@ (80006ec <set_output+0x74>)
- 800069c:	f000 ff5e 	bl	800155c <HAL_GPIO_WritePin>
+ 800071a:	79bb      	ldrb	r3, [r7, #6]
+ 800071c:	2b31      	cmp	r3, #49	@ 0x31
+ 800071e:	d106      	bne.n	800072e <set_output+0x2a>
+            HAL_GPIO_WritePin(GPIOC, GPIO_PIN_8, GPIO_PIN_SET); // Set GPIO_PIN_8 to high.
+ 8000720:	2201      	movs	r2, #1
+ 8000722:	f44f 7180 	mov.w	r1, #256	@ 0x100
+ 8000726:	4814      	ldr	r0, [pc, #80]	@ (8000778 <set_output+0x74>)
+ 8000728:	f000 ff18 	bl	800155c <HAL_GPIO_WritePin>
         if (state == '1')
-            HAL_GPIO_WritePin(GPIOC, GPIO_PIN_9, GPIO_PIN_SET);
+            HAL_GPIO_WritePin(GPIOC, GPIO_PIN_9, GPIO_PIN_SET); // Set GPIO_PIN_9 to high.
         else if (state == '0')
-            HAL_GPIO_WritePin(GPIOC, GPIO_PIN_9, GPIO_PIN_RESET);
+            HAL_GPIO_WritePin(GPIOC, GPIO_PIN_9, GPIO_PIN_RESET); // Set GPIO_PIN_9 to low.
     }
 }
- 80006a0:	e01f      	b.n	80006e2 <set_output+0x6a>
+ 800072c:	e01f      	b.n	800076e <set_output+0x6a>
         else if (state == '0')
- 80006a2:	79bb      	ldrb	r3, [r7, #6]
- 80006a4:	2b30      	cmp	r3, #48	@ 0x30
- 80006a6:	d11c      	bne.n	80006e2 <set_output+0x6a>
-            HAL_GPIO_WritePin(GPIOC, GPIO_PIN_8, GPIO_PIN_RESET);
- 80006a8:	2200      	movs	r2, #0
- 80006aa:	f44f 7180 	mov.w	r1, #256	@ 0x100
- 80006ae:	480f      	ldr	r0, [pc, #60]	@ (80006ec <set_output+0x74>)
- 80006b0:	f000 ff54 	bl	800155c <HAL_GPIO_WritePin>
+ 800072e:	79bb      	ldrb	r3, [r7, #6]
+ 8000730:	2b30      	cmp	r3, #48	@ 0x30
+ 8000732:	d11c      	bne.n	800076e <set_output+0x6a>
+            HAL_GPIO_WritePin(GPIOC, GPIO_PIN_8, GPIO_PIN_RESET); // Set GPIO_PIN_8 to low.
+ 8000734:	2200      	movs	r2, #0
+ 8000736:	f44f 7180 	mov.w	r1, #256	@ 0x100
+ 800073a:	480f      	ldr	r0, [pc, #60]	@ (8000778 <set_output+0x74>)
+ 800073c:	f000 ff0e 	bl	800155c <HAL_GPIO_WritePin>
 }
- 80006b4:	e015      	b.n	80006e2 <set_output+0x6a>
+ 8000740:	e015      	b.n	800076e <set_output+0x6a>
     } else if (pin == '1') {
- 80006b6:	79fb      	ldrb	r3, [r7, #7]
- 80006b8:	2b31      	cmp	r3, #49	@ 0x31
- 80006ba:	d112      	bne.n	80006e2 <set_output+0x6a>
+ 8000742:	79fb      	ldrb	r3, [r7, #7]
+ 8000744:	2b31      	cmp	r3, #49	@ 0x31
+ 8000746:	d112      	bne.n	800076e <set_output+0x6a>
         if (state == '1')
- 80006bc:	79bb      	ldrb	r3, [r7, #6]
- 80006be:	2b31      	cmp	r3, #49	@ 0x31
- 80006c0:	d106      	bne.n	80006d0 <set_output+0x58>
-            HAL_GPIO_WritePin(GPIOC, GPIO_PIN_9, GPIO_PIN_SET);
- 80006c2:	2201      	movs	r2, #1
- 80006c4:	f44f 7100 	mov.w	r1, #512	@ 0x200
- 80006c8:	4808      	ldr	r0, [pc, #32]	@ (80006ec <set_output+0x74>)
- 80006ca:	f000 ff47 	bl	800155c <HAL_GPIO_WritePin>
+ 8000748:	79bb      	ldrb	r3, [r7, #6]
+ 800074a:	2b31      	cmp	r3, #49	@ 0x31
+ 800074c:	d106      	bne.n	800075c <set_output+0x58>
+            HAL_GPIO_WritePin(GPIOC, GPIO_PIN_9, GPIO_PIN_SET); // Set GPIO_PIN_9 to high.
+ 800074e:	2201      	movs	r2, #1
+ 8000750:	f44f 7100 	mov.w	r1, #512	@ 0x200
+ 8000754:	4808      	ldr	r0, [pc, #32]	@ (8000778 <set_output+0x74>)
+ 8000756:	f000 ff01 	bl	800155c <HAL_GPIO_WritePin>
 }
- 80006ce:	e008      	b.n	80006e2 <set_output+0x6a>
+ 800075a:	e008      	b.n	800076e <set_output+0x6a>
         else if (state == '0')
- 80006d0:	79bb      	ldrb	r3, [r7, #6]
- 80006d2:	2b30      	cmp	r3, #48	@ 0x30
- 80006d4:	d105      	bne.n	80006e2 <set_output+0x6a>
-            HAL_GPIO_WritePin(GPIOC, GPIO_PIN_9, GPIO_PIN_RESET);
- 80006d6:	2200      	movs	r2, #0
- 80006d8:	f44f 7100 	mov.w	r1, #512	@ 0x200
- 80006dc:	4803      	ldr	r0, [pc, #12]	@ (80006ec <set_output+0x74>)
- 80006de:	f000 ff3d 	bl	800155c <HAL_GPIO_WritePin>
+ 800075c:	79bb      	ldrb	r3, [r7, #6]
+ 800075e:	2b30      	cmp	r3, #48	@ 0x30
+ 8000760:	d105      	bne.n	800076e <set_output+0x6a>
+            HAL_GPIO_WritePin(GPIOC, GPIO_PIN_9, GPIO_PIN_RESET); // Set GPIO_PIN_9 to low.
+ 8000762:	2200      	movs	r2, #0
+ 8000764:	f44f 7100 	mov.w	r1, #512	@ 0x200
+ 8000768:	4803      	ldr	r0, [pc, #12]	@ (8000778 <set_output+0x74>)
+ 800076a:	f000 fef7 	bl	800155c <HAL_GPIO_WritePin>
 }
- 80006e2:	bf00      	nop
- 80006e4:	3708      	adds	r7, #8
- 80006e6:	46bd      	mov	sp, r7
- 80006e8:	bd80      	pop	{r7, pc}
- 80006ea:	bf00      	nop
- 80006ec:	40020800 	.word	0x40020800
+ 800076e:	bf00      	nop
+ 8000770:	3708      	adds	r7, #8
+ 8000772:	46bd      	mov	sp, r7
+ 8000774:	bd80      	pop	{r7, pc}
+ 8000776:	bf00      	nop
+ 8000778:	40020800 	.word	0x40020800
 
-080006f0 <main>:
-/**
-  * @brief  The application entry point.
-  * @retval int
+0800077c <main>:
+  * Invalid or unrecognized commands return an "Unknown Command" message.
+  *
+  * @retval int Always returns 0 (application does not terminate).
   */
 int main(void)
 {
- 80006f0:	b580      	push	{r7, lr}
- 80006f2:	b082      	sub	sp, #8
- 80006f4:	af00      	add	r7, sp, #0
-    HAL_Init();
- 80006f6:	f000 fb6f 	bl	8000dd8 <HAL_Init>
-    SystemClock_Config();
- 80006fa:	f000 f8c5 	bl	8000888 <SystemClock_Config>
-    MX_GPIO_Init();
- 80006fe:	f000 f95b 	bl	80009b8 <MX_GPIO_Init>
-    MX_USART3_UART_Init();
- 8000702:	f000 f92f 	bl	8000964 <MX_USART3_UART_Init>
+ 800077c:	b580      	push	{r7, lr}
+ 800077e:	b082      	sub	sp, #8
+ 8000780:	af00      	add	r7, sp, #0
+    HAL_Init();                           // Initialize the HAL library.
+ 8000782:	f000 fb29 	bl	8000dd8 <HAL_Init>
+    SystemClock_Config();                 // Configure the system clock.
+ 8000786:	f000 f87f 	bl	8000888 <SystemClock_Config>
+    MX_GPIO_Init();                       // Initialize GPIO pins.
+ 800078a:	f000 f915 	bl	80009b8 <MX_GPIO_Init>
+    MX_USART3_UART_Init();                // Initialize UART3 for communication.
+ 800078e:	f000 f8e9 	bl	8000964 <MX_USART3_UART_Init>
 
-    HAL_UART_Receive_IT(&huart3, (uint8_t *)rx_buffer, 1);
- 8000706:	2201      	movs	r2, #1
- 8000708:	4931      	ldr	r1, [pc, #196]	@ (80007d0 <main+0xe0>)
- 800070a:	4832      	ldr	r0, [pc, #200]	@ (80007d4 <main+0xe4>)
- 800070c:	f001 fe03 	bl	8002316 <HAL_UART_Receive_IT>
+    HAL_UART_Receive_IT(&huart3, (uint8_t *)rx_buffer, 1); // Enable UART reception in interrupt mode.
+ 8000792:	2201      	movs	r2, #1
+ 8000794:	4931      	ldr	r1, [pc, #196]	@ (800085c <main+0xe0>)
+ 8000796:	4832      	ldr	r0, [pc, #200]	@ (8000860 <main+0xe4>)
+ 8000798:	f001 fdbd 	bl	8002316 <HAL_UART_Receive_IT>
 
     while (1) {
-        if (command_ready_flag) {
- 8000710:	4b31      	ldr	r3, [pc, #196]	@ (80007d8 <main+0xe8>)
- 8000712:	781b      	ldrb	r3, [r3, #0]
- 8000714:	b2db      	uxtb	r3, r3
- 8000716:	2b00      	cmp	r3, #0
- 8000718:	d0fa      	beq.n	8000710 <main+0x20>
+        if (command_ready_flag) {         // Check if a command has been received and is ready to process.
+ 800079c:	4b31      	ldr	r3, [pc, #196]	@ (8000864 <main+0xe8>)
+ 800079e:	781b      	ldrb	r3, [r3, #0]
+ 80007a0:	b2db      	uxtb	r3, r3
+ 80007a2:	2b00      	cmp	r3, #0
+ 80007a4:	d0fa      	beq.n	800079c <main+0x20>
             if (strcmp(command_buffer, "r") == 0) {
- 800071a:	4930      	ldr	r1, [pc, #192]	@ (80007dc <main+0xec>)
- 800071c:	4830      	ldr	r0, [pc, #192]	@ (80007e0 <main+0xf0>)
- 800071e:	f7ff fd77 	bl	8000210 <strcmp>
- 8000722:	4603      	mov	r3, r0
- 8000724:	2b00      	cmp	r3, #0
- 8000726:	d109      	bne.n	800073c <main+0x4c>
-                reset_outputs();
- 8000728:	f7ff ff52 	bl	80005d0 <reset_outputs>
-                HAL_UART_Transmit(&huart3, (uint8_t *)"Outputs Reset\n", 15, HAL_MAX_DELAY);
- 800072c:	f04f 33ff 	mov.w	r3, #4294967295
- 8000730:	220f      	movs	r2, #15
- 8000732:	492c      	ldr	r1, [pc, #176]	@ (80007e4 <main+0xf4>)
- 8000734:	4827      	ldr	r0, [pc, #156]	@ (80007d4 <main+0xe4>)
- 8000736:	f001 fd63 	bl	8002200 <HAL_UART_Transmit>
- 800073a:	e045      	b.n	80007c8 <main+0xd8>
+ 80007a6:	4930      	ldr	r1, [pc, #192]	@ (8000868 <main+0xec>)
+ 80007a8:	4830      	ldr	r0, [pc, #192]	@ (800086c <main+0xf0>)
+ 80007aa:	f7ff fd31 	bl	8000210 <strcmp>
+ 80007ae:	4603      	mov	r3, r0
+ 80007b0:	2b00      	cmp	r3, #0
+ 80007b2:	d109      	bne.n	80007c8 <main+0x4c>
+                reset_outputs();          // Reset all outputs to their default state.
+ 80007b4:	f7ff ff52 	bl	800065c <reset_outputs>
+                HAL_UART_Transmit(&huart3, (uint8_t *)"Outputs Reset\n", 15, HAL_MAX_DELAY); // Confirm reset.
+ 80007b8:	f04f 33ff 	mov.w	r3, #4294967295
+ 80007bc:	220f      	movs	r2, #15
+ 80007be:	492c      	ldr	r1, [pc, #176]	@ (8000870 <main+0xf4>)
+ 80007c0:	4827      	ldr	r0, [pc, #156]	@ (8000860 <main+0xe4>)
+ 80007c2:	f001 fd1d 	bl	8002200 <HAL_UART_Transmit>
+ 80007c6:	e045      	b.n	8000854 <main+0xd8>
             } else if (strcmp(command_buffer, "d") == 0) {
- 800073c:	492a      	ldr	r1, [pc, #168]	@ (80007e8 <main+0xf8>)
- 800073e:	4828      	ldr	r0, [pc, #160]	@ (80007e0 <main+0xf0>)
- 8000740:	f7ff fd66 	bl	8000210 <strcmp>
- 8000744:	4603      	mov	r3, r0
- 8000746:	2b00      	cmp	r3, #0
- 8000748:	d102      	bne.n	8000750 <main+0x60>
-                handle_inputs();
- 800074a:	f7ff ff4d 	bl	80005e8 <handle_inputs>
- 800074e:	e03b      	b.n	80007c8 <main+0xd8>
+ 80007c8:	492a      	ldr	r1, [pc, #168]	@ (8000874 <main+0xf8>)
+ 80007ca:	4828      	ldr	r0, [pc, #160]	@ (800086c <main+0xf0>)
+ 80007cc:	f7ff fd20 	bl	8000210 <strcmp>
+ 80007d0:	4603      	mov	r3, r0
+ 80007d2:	2b00      	cmp	r3, #0
+ 80007d4:	d102      	bne.n	80007dc <main+0x60>
+                handle_inputs();          // Handle sensor inputs and transmit their state via UART.
+ 80007d6:	f7ff ff4d 	bl	8000674 <handle_inputs>
+ 80007da:	e03b      	b.n	8000854 <main+0xd8>
             } else if (strncmp(command_buffer, "s", 1) == 0 && strlen(command_buffer) == 3) {
- 8000750:	4b23      	ldr	r3, [pc, #140]	@ (80007e0 <main+0xf0>)
- 8000752:	781a      	ldrb	r2, [r3, #0]
- 8000754:	4b25      	ldr	r3, [pc, #148]	@ (80007ec <main+0xfc>)
- 8000756:	781b      	ldrb	r3, [r3, #0]
- 8000758:	1ad3      	subs	r3, r2, r3
- 800075a:	2b00      	cmp	r3, #0
- 800075c:	d12d      	bne.n	80007ba <main+0xca>
- 800075e:	4820      	ldr	r0, [pc, #128]	@ (80007e0 <main+0xf0>)
- 8000760:	f7ff fd60 	bl	8000224 <strlen>
- 8000764:	4603      	mov	r3, r0
- 8000766:	2b03      	cmp	r3, #3
- 8000768:	d127      	bne.n	80007ba <main+0xca>
-                char pin = command_buffer[1];   // Second character specifies the pin
- 800076a:	4b1d      	ldr	r3, [pc, #116]	@ (80007e0 <main+0xf0>)
- 800076c:	785b      	ldrb	r3, [r3, #1]
- 800076e:	71fb      	strb	r3, [r7, #7]
-                char state = command_buffer[2]; // Third character specifies the state
- 8000770:	4b1b      	ldr	r3, [pc, #108]	@ (80007e0 <main+0xf0>)
- 8000772:	789b      	ldrb	r3, [r3, #2]
- 8000774:	71bb      	strb	r3, [r7, #6]
+ 80007dc:	4b23      	ldr	r3, [pc, #140]	@ (800086c <main+0xf0>)
+ 80007de:	781a      	ldrb	r2, [r3, #0]
+ 80007e0:	4b25      	ldr	r3, [pc, #148]	@ (8000878 <main+0xfc>)
+ 80007e2:	781b      	ldrb	r3, [r3, #0]
+ 80007e4:	1ad3      	subs	r3, r2, r3
+ 80007e6:	2b00      	cmp	r3, #0
+ 80007e8:	d12d      	bne.n	8000846 <main+0xca>
+ 80007ea:	4820      	ldr	r0, [pc, #128]	@ (800086c <main+0xf0>)
+ 80007ec:	f7ff fd1a 	bl	8000224 <strlen>
+ 80007f0:	4603      	mov	r3, r0
+ 80007f2:	2b03      	cmp	r3, #3
+ 80007f4:	d127      	bne.n	8000846 <main+0xca>
+                char pin = command_buffer[1];   // Extract the pin identifier from the command.
+ 80007f6:	4b1d      	ldr	r3, [pc, #116]	@ (800086c <main+0xf0>)
+ 80007f8:	785b      	ldrb	r3, [r3, #1]
+ 80007fa:	71fb      	strb	r3, [r7, #7]
+                char state = command_buffer[2]; // Extract the state from the command.
+ 80007fc:	4b1b      	ldr	r3, [pc, #108]	@ (800086c <main+0xf0>)
+ 80007fe:	789b      	ldrb	r3, [r3, #2]
+ 8000800:	71bb      	strb	r3, [r7, #6]
 
-                // Validate pin and state
+                // Validate pin and state.
                 if ((pin == '0' || pin == '1') && (state == '0' || state == '1')) {
- 8000776:	79fb      	ldrb	r3, [r7, #7]
- 8000778:	2b30      	cmp	r3, #48	@ 0x30
- 800077a:	d002      	beq.n	8000782 <main+0x92>
- 800077c:	79fb      	ldrb	r3, [r7, #7]
- 800077e:	2b31      	cmp	r3, #49	@ 0x31
- 8000780:	d113      	bne.n	80007aa <main+0xba>
- 8000782:	79bb      	ldrb	r3, [r7, #6]
- 8000784:	2b30      	cmp	r3, #48	@ 0x30
- 8000786:	d002      	beq.n	800078e <main+0x9e>
- 8000788:	79bb      	ldrb	r3, [r7, #6]
- 800078a:	2b31      	cmp	r3, #49	@ 0x31
- 800078c:	d10d      	bne.n	80007aa <main+0xba>
-                    set_output(pin, state);
- 800078e:	79ba      	ldrb	r2, [r7, #6]
- 8000790:	79fb      	ldrb	r3, [r7, #7]
- 8000792:	4611      	mov	r1, r2
- 8000794:	4618      	mov	r0, r3
- 8000796:	f7ff ff6f 	bl	8000678 <set_output>
-                    HAL_UART_Transmit(&huart3, (uint8_t *)"Output Set\n", 11, HAL_MAX_DELAY);
- 800079a:	f04f 33ff 	mov.w	r3, #4294967295
- 800079e:	220b      	movs	r2, #11
- 80007a0:	4913      	ldr	r1, [pc, #76]	@ (80007f0 <main+0x100>)
- 80007a2:	480c      	ldr	r0, [pc, #48]	@ (80007d4 <main+0xe4>)
- 80007a4:	f001 fd2c 	bl	8002200 <HAL_UART_Transmit>
+ 8000802:	79fb      	ldrb	r3, [r7, #7]
+ 8000804:	2b30      	cmp	r3, #48	@ 0x30
+ 8000806:	d002      	beq.n	800080e <main+0x92>
+ 8000808:	79fb      	ldrb	r3, [r7, #7]
+ 800080a:	2b31      	cmp	r3, #49	@ 0x31
+ 800080c:	d113      	bne.n	8000836 <main+0xba>
+ 800080e:	79bb      	ldrb	r3, [r7, #6]
+ 8000810:	2b30      	cmp	r3, #48	@ 0x30
+ 8000812:	d002      	beq.n	800081a <main+0x9e>
+ 8000814:	79bb      	ldrb	r3, [r7, #6]
+ 8000816:	2b31      	cmp	r3, #49	@ 0x31
+ 8000818:	d10d      	bne.n	8000836 <main+0xba>
+                    set_output(pin, state);     // Set the specified output pin to the desired state.
+ 800081a:	79ba      	ldrb	r2, [r7, #6]
+ 800081c:	79fb      	ldrb	r3, [r7, #7]
+ 800081e:	4611      	mov	r1, r2
+ 8000820:	4618      	mov	r0, r3
+ 8000822:	f7ff ff6f 	bl	8000704 <set_output>
+                    HAL_UART_Transmit(&huart3, (uint8_t *)"Output Set\n", 11, HAL_MAX_DELAY); // Confirm action.
+ 8000826:	f04f 33ff 	mov.w	r3, #4294967295
+ 800082a:	220b      	movs	r2, #11
+ 800082c:	4913      	ldr	r1, [pc, #76]	@ (800087c <main+0x100>)
+ 800082e:	480c      	ldr	r0, [pc, #48]	@ (8000860 <main+0xe4>)
+ 8000830:	f001 fce6 	bl	8002200 <HAL_UART_Transmit>
             } else if (strncmp(command_buffer, "s", 1) == 0 && strlen(command_buffer) == 3) {
- 80007a8:	e00e      	b.n	80007c8 <main+0xd8>
+ 8000834:	e00e      	b.n	8000854 <main+0xd8>
                 } else {
-                    HAL_UART_Transmit(&huart3, (uint8_t *)"Invalid sXY Format\n", 20, HAL_MAX_DELAY);
- 80007aa:	f04f 33ff 	mov.w	r3, #4294967295
- 80007ae:	2214      	movs	r2, #20
- 80007b0:	4910      	ldr	r1, [pc, #64]	@ (80007f4 <main+0x104>)
- 80007b2:	4808      	ldr	r0, [pc, #32]	@ (80007d4 <main+0xe4>)
- 80007b4:	f001 fd24 	bl	8002200 <HAL_UART_Transmit>
+                    HAL_UART_Transmit(&huart3, (uint8_t *)"Invalid sXY Format\n", 20, HAL_MAX_DELAY); // Invalid format.
+ 8000836:	f04f 33ff 	mov.w	r3, #4294967295
+ 800083a:	2214      	movs	r2, #20
+ 800083c:	4910      	ldr	r1, [pc, #64]	@ (8000880 <main+0x104>)
+ 800083e:	4808      	ldr	r0, [pc, #32]	@ (8000860 <main+0xe4>)
+ 8000840:	f001 fcde 	bl	8002200 <HAL_UART_Transmit>
             } else if (strncmp(command_buffer, "s", 1) == 0 && strlen(command_buffer) == 3) {
- 80007b8:	e006      	b.n	80007c8 <main+0xd8>
+ 8000844:	e006      	b.n	8000854 <main+0xd8>
                 }
             } else {
-                HAL_UART_Transmit(&huart3, (uint8_t *)"Unknown Command\n", 17, HAL_MAX_DELAY);
- 80007ba:	f04f 33ff 	mov.w	r3, #4294967295
- 80007be:	2211      	movs	r2, #17
- 80007c0:	490d      	ldr	r1, [pc, #52]	@ (80007f8 <main+0x108>)
- 80007c2:	4804      	ldr	r0, [pc, #16]	@ (80007d4 <main+0xe4>)
- 80007c4:	f001 fd1c 	bl	8002200 <HAL_UART_Transmit>
+                HAL_UART_Transmit(&huart3, (uint8_t *)"Unknown Command\n", 17, HAL_MAX_DELAY); // Unrecognized command.
+ 8000846:	f04f 33ff 	mov.w	r3, #4294967295
+ 800084a:	2211      	movs	r2, #17
+ 800084c:	490d      	ldr	r1, [pc, #52]	@ (8000884 <main+0x108>)
+ 800084e:	4804      	ldr	r0, [pc, #16]	@ (8000860 <main+0xe4>)
+ 8000850:	f001 fcd6 	bl	8002200 <HAL_UART_Transmit>
             }
-            command_ready_flag = 0;
- 80007c8:	4b03      	ldr	r3, [pc, #12]	@ (80007d8 <main+0xe8>)
- 80007ca:	2200      	movs	r2, #0
- 80007cc:	701a      	strb	r2, [r3, #0]
-        if (command_ready_flag) {
- 80007ce:	e79f      	b.n	8000710 <main+0x20>
- 80007d0:	200000c0 	.word	0x200000c0
- 80007d4:	20000078 	.word	0x20000078
- 80007d8:	20000128 	.word	0x20000128
- 80007dc:	08003b90 	.word	0x08003b90
- 80007e0:	200000c4 	.word	0x200000c4
- 80007e4:	08003b94 	.word	0x08003b94
- 80007e8:	08003ba4 	.word	0x08003ba4
- 80007ec:	08003ba8 	.word	0x08003ba8
- 80007f0:	08003bac 	.word	0x08003bac
- 80007f4:	08003bb8 	.word	0x08003bb8
- 80007f8:	08003bcc 	.word	0x08003bcc
-
-080007fc <HAL_UART_RxCpltCallback>:
-        }
-    }
-}
-
-void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
-{
- 80007fc:	b580      	push	{r7, lr}
- 80007fe:	b084      	sub	sp, #16
- 8000800:	af00      	add	r7, sp, #0
- 8000802:	6078      	str	r0, [r7, #4]
-    static uint8_t rx_index = 0;
-
-    if (huart->Instance == USART3) {
- 8000804:	687b      	ldr	r3, [r7, #4]
- 8000806:	681b      	ldr	r3, [r3, #0]
- 8000808:	4a19      	ldr	r2, [pc, #100]	@ (8000870 <HAL_UART_RxCpltCallback+0x74>)
- 800080a:	4293      	cmp	r3, r2
- 800080c:	d12c      	bne.n	8000868 <HAL_UART_RxCpltCallback+0x6c>
-        char received_char = rx_buffer[0];
- 800080e:	4b19      	ldr	r3, [pc, #100]	@ (8000874 <HAL_UART_RxCpltCallback+0x78>)
- 8000810:	781b      	ldrb	r3, [r3, #0]
- 8000812:	73fb      	strb	r3, [r7, #15]
-
-        if (received_char == '\n' || received_char == '\r') {
- 8000814:	7bfb      	ldrb	r3, [r7, #15]
- 8000816:	2b0a      	cmp	r3, #10
- 8000818:	d002      	beq.n	8000820 <HAL_UART_RxCpltCallback+0x24>
- 800081a:	7bfb      	ldrb	r3, [r7, #15]
- 800081c:	2b0d      	cmp	r3, #13
- 800081e:	d10c      	bne.n	800083a <HAL_UART_RxCpltCallback+0x3e>
-            command_buffer[rx_index] = '\0';
- 8000820:	4b15      	ldr	r3, [pc, #84]	@ (8000878 <HAL_UART_RxCpltCallback+0x7c>)
- 8000822:	781b      	ldrb	r3, [r3, #0]
- 8000824:	461a      	mov	r2, r3
- 8000826:	4b15      	ldr	r3, [pc, #84]	@ (800087c <HAL_UART_RxCpltCallback+0x80>)
- 8000828:	2100      	movs	r1, #0
- 800082a:	5499      	strb	r1, [r3, r2]
-            command_ready_flag = 1;
- 800082c:	4b14      	ldr	r3, [pc, #80]	@ (8000880 <HAL_UART_RxCpltCallback+0x84>)
- 800082e:	2201      	movs	r2, #1
- 8000830:	701a      	strb	r2, [r3, #0]
-            rx_index = 0;
- 8000832:	4b11      	ldr	r3, [pc, #68]	@ (8000878 <HAL_UART_RxCpltCallback+0x7c>)
- 8000834:	2200      	movs	r2, #0
- 8000836:	701a      	strb	r2, [r3, #0]
- 8000838:	e011      	b.n	800085e <HAL_UART_RxCpltCallback+0x62>
-        } else if (rx_index < RX_BUFFER_SIZE - 1) {
- 800083a:	4b0f      	ldr	r3, [pc, #60]	@ (8000878 <HAL_UART_RxCpltCallback+0x7c>)
- 800083c:	781b      	ldrb	r3, [r3, #0]
- 800083e:	2b62      	cmp	r3, #98	@ 0x62
- 8000840:	d80a      	bhi.n	8000858 <HAL_UART_RxCpltCallback+0x5c>
-            command_buffer[rx_index++] = received_char;
- 8000842:	4b0d      	ldr	r3, [pc, #52]	@ (8000878 <HAL_UART_RxCpltCallback+0x7c>)
- 8000844:	781b      	ldrb	r3, [r3, #0]
- 8000846:	1c5a      	adds	r2, r3, #1
- 8000848:	b2d1      	uxtb	r1, r2
- 800084a:	4a0b      	ldr	r2, [pc, #44]	@ (8000878 <HAL_UART_RxCpltCallback+0x7c>)
- 800084c:	7011      	strb	r1, [r2, #0]
- 800084e:	4619      	mov	r1, r3
- 8000850:	4a0a      	ldr	r2, [pc, #40]	@ (800087c <HAL_UART_RxCpltCallback+0x80>)
- 8000852:	7bfb      	ldrb	r3, [r7, #15]
- 8000854:	5453      	strb	r3, [r2, r1]
- 8000856:	e002      	b.n	800085e <HAL_UART_RxCpltCallback+0x62>
-        } else {
-            rx_index = 0;
- 8000858:	4b07      	ldr	r3, [pc, #28]	@ (8000878 <HAL_UART_RxCpltCallback+0x7c>)
- 800085a:	2200      	movs	r2, #0
- 800085c:	701a      	strb	r2, [r3, #0]
-        }
-
-        HAL_UART_Receive_IT(&huart3, (uint8_t *)rx_buffer, 1);
- 800085e:	2201      	movs	r2, #1
- 8000860:	4904      	ldr	r1, [pc, #16]	@ (8000874 <HAL_UART_RxCpltCallback+0x78>)
- 8000862:	4808      	ldr	r0, [pc, #32]	@ (8000884 <HAL_UART_RxCpltCallback+0x88>)
- 8000864:	f001 fd57 	bl	8002316 <HAL_UART_Receive_IT>
-    }
-}
- 8000868:	bf00      	nop
- 800086a:	3710      	adds	r7, #16
- 800086c:	46bd      	mov	sp, r7
- 800086e:	bd80      	pop	{r7, pc}
- 8000870:	40004800 	.word	0x40004800
- 8000874:	200000c0 	.word	0x200000c0
- 8000878:	20000129 	.word	0x20000129
- 800087c:	200000c4 	.word	0x200000c4
- 8000880:	20000128 	.word	0x20000128
- 8000884:	20000078 	.word	0x20000078
+            command_ready_flag = 0;       // Reset the command ready flag after processing.
+ 8000854:	4b03      	ldr	r3, [pc, #12]	@ (8000864 <main+0xe8>)
+ 8000856:	2200      	movs	r2, #0
+ 8000858:	701a      	strb	r2, [r3, #0]
+        if (command_ready_flag) {         // Check if a command has been received and is ready to process.
+ 800085a:	e79f      	b.n	800079c <main+0x20>
+ 800085c:	200000c0 	.word	0x200000c0
+ 8000860:	20000078 	.word	0x20000078
+ 8000864:	20000128 	.word	0x20000128
+ 8000868:	08003b90 	.word	0x08003b90
+ 800086c:	200000c4 	.word	0x200000c4
+ 8000870:	08003b94 	.word	0x08003b94
+ 8000874:	08003ba4 	.word	0x08003ba4
+ 8000878:	08003ba8 	.word	0x08003ba8
+ 800087c:	08003bac 	.word	0x08003bac
+ 8000880:	08003bb8 	.word	0x08003bb8
+ 8000884:	08003bcc 	.word	0x08003bcc
 
 08000888 <SystemClock_Config>:
 /**
@@ -1869,7 +1870,7 @@ LoopFillZerobss:
  8000db2:	f002 fa6d 	bl	8003290 <__libc_init_array>
 /* Call the application's entry point.*/
   bl  main
- 8000db6:	f7ff fc9b 	bl	80006f0 <main>
+ 8000db6:	f7ff fce1 	bl	800077c <main>
   bx  lr    
  8000dba:	4770      	bx	lr
   ldr   sp, =_estack      /* set stack pointer */
@@ -7091,7 +7092,7 @@ static HAL_StatusTypeDef UART_Receive_IT(UART_HandleTypeDef *huart)
         /*Call legacy weak Rx complete callback*/
         HAL_UART_RxCpltCallback(huart);
  8002d0c:	6878      	ldr	r0, [r7, #4]
- 8002d0e:	f7fd fd75 	bl	80007fc <HAL_UART_RxCpltCallback>
+ 8002d0e:	f7fd fc5f 	bl	80005d0 <HAL_UART_RxCpltCallback>
 #endif /* USE_HAL_UART_REGISTER_CALLBACKS */
       }
 

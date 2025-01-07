@@ -1304,3 +1304,23 @@ Finished building: default.size.stdout
  
 Finished building: Uartronica_Control_Board.list
  
+19:37:19 **** Incremental Build of configuration Debug for project Uartronica_Control_Board ****
+make -j4 all 
+arm-none-eabi-gcc "../Core/Src/main.c" -mcpu=cortex-m4 -std=gnu11 -g3 -DDEBUG -DUSE_HAL_DRIVER -DSTM32F446xx -c -I../Core/Inc -I../Drivers/STM32F4xx_HAL_Driver/Inc -I../Drivers/STM32F4xx_HAL_Driver/Inc/Legacy -I../Drivers/CMSIS/Device/ST/STM32F4xx/Include -I../Drivers/CMSIS/Include -O0 -ffunction-sections -fdata-sections -Wall -fstack-usage -fcyclomatic-complexity -MMD -MP -MF"Core/Src/main.d" -MT"Core/Src/main.o" --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -o "Core/Src/main.o"
+../Core/Src/main.c:298:3: warning: "/*" within comment [-Wcomment]
+  298 |   /* USER CODE BEGIN USART2_Init 0 */
+      |    
+../Core/Src/main.c:317:3: warning: "/*" within comment [-Wcomment]
+  317 |   /* USER CODE BEGIN USART2_Init 2 */
+      |    
+arm-none-eabi-gcc -o "Uartronica_Control_Board.elf" @"objects.list"   -mcpu=cortex-m4 -T"C:\Users\Admin.ONTPC12\Desktop\UartxFirmwareRepo\UartxFirmware\Uartronica_Control_Board\STM32F446RETX_FLASH.ld" --specs=nosys.specs -Wl,-Map="Uartronica_Control_Board.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
+Finished building target: Uartronica_Control_Board.elf
+ 
+arm-none-eabi-size  Uartronica_Control_Board.elf 
+arm-none-eabi-objdump -h -S Uartronica_Control_Board.elf  > "Uartronica_Control_Board.list"
+   text	   data	    bss	    dec	    hex	filename
+  15408	     92	   2084	  17584	   44b0	Uartronica_Control_Board.elf
+Finished building: default.size.stdout
+ 
+Finished building: Uartronica_Control_Board.list
+ 

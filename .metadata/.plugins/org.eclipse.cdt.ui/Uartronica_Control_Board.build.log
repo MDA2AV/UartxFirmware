@@ -1,11 +1,11 @@
-19:21:35 **** Incremental Build of configuration Debug for project Uartronica_Control_Board ****
+19:37:19 **** Incremental Build of configuration Debug for project Uartronica_Control_Board ****
 make -j4 all 
 arm-none-eabi-gcc "../Core/Src/main.c" -mcpu=cortex-m4 -std=gnu11 -g3 -DDEBUG -DUSE_HAL_DRIVER -DSTM32F446xx -c -I../Core/Inc -I../Drivers/STM32F4xx_HAL_Driver/Inc -I../Drivers/STM32F4xx_HAL_Driver/Inc/Legacy -I../Drivers/CMSIS/Device/ST/STM32F4xx/Include -I../Drivers/CMSIS/Include -O0 -ffunction-sections -fdata-sections -Wall -fstack-usage -fcyclomatic-complexity -MMD -MP -MF"Core/Src/main.d" -MT"Core/Src/main.o" --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -o "Core/Src/main.o"
-../Core/Src/main.c:238:3: warning: "/*" within comment [-Wcomment]
-  238 |   /* USER CODE BEGIN USART2_Init 0 */
+../Core/Src/main.c:298:3: warning: "/*" within comment [-Wcomment]
+  298 |   /* USER CODE BEGIN USART2_Init 0 */
       |    
-../Core/Src/main.c:257:3: warning: "/*" within comment [-Wcomment]
-  257 |   /* USER CODE BEGIN USART2_Init 2 */
+../Core/Src/main.c:317:3: warning: "/*" within comment [-Wcomment]
+  317 |   /* USER CODE BEGIN USART2_Init 2 */
       |    
 arm-none-eabi-gcc -o "Uartronica_Control_Board.elf" @"objects.list"   -mcpu=cortex-m4 -T"C:\Users\Admin.ONTPC12\Desktop\UartxFirmwareRepo\UartxFirmware\Uartronica_Control_Board\STM32F446RETX_FLASH.ld" --specs=nosys.specs -Wl,-Map="Uartronica_Control_Board.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
 Finished building target: Uartronica_Control_Board.elf
@@ -19,5 +19,5 @@ Finished building: default.size.stdout
 Finished building: Uartronica_Control_Board.list
  
 
-19:21:36 Build Finished. 0 errors, 2 warnings. (took 1s.73ms)
+19:37:20 Build Finished. 0 errors, 2 warnings. (took 1s.518ms)
 
