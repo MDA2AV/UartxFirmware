@@ -1,0 +1,15 @@
+../Core/Src/main.c:130:6:HAL_UART_RxCpltCallback	13
+../Core/Src/main.c:201:6:configure_input_pins	9
+../Core/Src/main.c:255:6:configure_output_pins	9
+../Core/Src/main.c:317:6:configure_reset_pins	9
+../Core/Src/main.c:368:6:handle_inputs	6
+../Core/Src/main.c:419:6:set_output	4
+../Core/Src/main.c:470:6:reset_output_pins	9
+../Core/Src/main.c:541:6:process_command	5
+../Core/Src/main.c:578:5:main	4
+../Core/Src/main.c:648:6:SystemClock_Config	3
+../Core/Src/main.c:696:13:MX_USART1_UART_Init	2
+../Core/Src/main.c:729:13:MX_USART2_UART_Init	2
+../Core/Src/main.c:762:13:MX_USART3_UART_Init	2
+../Core/Src/main.c:795:13:MX_GPIO_Init	1
+../Core/Src/main.c:861:6:Error_Handler	1
