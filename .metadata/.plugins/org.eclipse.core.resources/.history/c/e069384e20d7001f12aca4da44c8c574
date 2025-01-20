@@ -466,7 +466,7 @@ void set_output(UART_HandleTypeDef *huart, char pin, char state)
  * @param pin_to_reset  Pointer to a string representing the pin name (e.g., "PC8").
  *                      If `NULL`, all output pins are reset.
  *
- * RESET ALL PINS -> NOT WORKING YET - SEE THE CODE IN WORKSPACE FOR NEW UPDATES
+ * RESET ALL PINS -> NOT WORKING YET
  *
  */
 void reset_output_pins(UART_HandleTypeDef *huart, char *pin_to_reset)
