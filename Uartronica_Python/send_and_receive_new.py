@@ -56,9 +56,9 @@ def main():
     try:
         while True:
             print("\nCommands:")
-            print("1. Read Inputs:        d (e.g., d PC0 PC1)")
-            print("2. State Outputs:      sXY (e.g., s01 PC8)")
-            print("3. Reset Output Pins:  r (e.g., r PC8)")
+            print("1. Read Inputs:        d (e.g., d PC0 PC1) - 2 PINS ONLY")
+            print("2. State Outputs:      sXY - X -> 0/1 & Y -> 0/1 (e.g., s01 PC8 PC9)")
+            print("3. Reset Output Pins:  r (e.g., r PC8 - ANY NUMBER OF PINS) ")
             print("Type 'exit' to quit.\n")
 
             command = input("Enter a command: ").strip()
