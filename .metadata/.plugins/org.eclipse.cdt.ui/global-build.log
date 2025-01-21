@@ -1745,3 +1745,63 @@ Finished building: default.size.stdout
  
 Finished building: Uatronica_Control_Board_DynamicUsage.list
  
+18:36:48 **** Incremental Build of configuration Debug for project Uatronica_Control_Board_DynamicUsage ****
+make -j4 all 
+arm-none-eabi-gcc "../Core/Src/main.c" -mcpu=cortex-m4 -std=gnu11 -g3 -DDEBUG -DUSE_HAL_DRIVER -DSTM32F446xx -c -I../Core/Inc -I../Drivers/STM32F4xx_HAL_Driver/Inc -I../Drivers/STM32F4xx_HAL_Driver/Inc/Legacy -I../Drivers/CMSIS/Device/ST/STM32F4xx/Include -I../Drivers/CMSIS/Include -O0 -ffunction-sections -fdata-sections -Wall -fstack-usage -fcyclomatic-complexity -MMD -MP -MF"Core/Src/main.d" -MT"Core/Src/main.o" --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -o "Core/Src/main.o"
+../Core/Src/main.c: In function 'configure_pins':
+../Core/Src/main.c:261:18: warning: implicit declaration of function 'isdigit' [-Wimplicit-function-declaration]
+  261 |             if (!isdigit(*c)) {
+      |                  ^~~~~~~
+../Core/Src/main.c:28:1: note: include '<ctype.h>' or provide a declaration of 'isdigit'
+   27 | #include <stdbool.h>
+  +++ |+#include <ctype.h>
+   28 | /* USER CODE END Includes */
+arm-none-eabi-gcc -o "Uatronica_Control_Board_DynamicUsage.elf" @"objects.list"   -mcpu=cortex-m4 -T"C:\Users\Admin.ONTPC12\Desktop\UartxFirmwareRepo\UartxFirmware\Uatronica_Control_Board_DynamicUsage\STM32F446RETX_FLASH.ld" --specs=nosys.specs -Wl,-Map="Uatronica_Control_Board_DynamicUsage.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
+Finished building target: Uatronica_Control_Board_DynamicUsage.elf
+ 
+arm-none-eabi-size  Uatronica_Control_Board_DynamicUsage.elf 
+arm-none-eabi-objdump -h -S Uatronica_Control_Board_DynamicUsage.elf  > "Uatronica_Control_Board_DynamicUsage.list"
+   text	   data	    bss	    dec	    hex	filename
+  21396	    104	   2608	  24108	   5e2c	Uatronica_Control_Board_DynamicUsage.elf
+Finished building: default.size.stdout
+ 
+Finished building: Uatronica_Control_Board_DynamicUsage.list
+ 
+18:37:18 **** Incremental Build of configuration Debug for project Uatronica_Control_Board_DynamicUsage ****
+make -j4 all 
+arm-none-eabi-gcc "../Core/Src/main.c" -mcpu=cortex-m4 -std=gnu11 -g3 -DDEBUG -DUSE_HAL_DRIVER -DSTM32F446xx -c -I../Core/Inc -I../Drivers/STM32F4xx_HAL_Driver/Inc -I../Drivers/STM32F4xx_HAL_Driver/Inc/Legacy -I../Drivers/CMSIS/Device/ST/STM32F4xx/Include -I../Drivers/CMSIS/Include -O0 -ffunction-sections -fdata-sections -Wall -fstack-usage -fcyclomatic-complexity -MMD -MP -MF"Core/Src/main.d" -MT"Core/Src/main.o" --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -o "Core/Src/main.o"
+In file included from ../Core/Src/main.c:28:
+../Core/Src/main.c: In function 'configure_pins':
+../Core/Src/main.c:263:26: warning: array subscript has type 'char' [-Wchar-subscripts]
+  263 |             if (!isdigit(*c)) {
+      |                          ^~
+arm-none-eabi-gcc -o "Uatronica_Control_Board_DynamicUsage.elf" @"objects.list"   -mcpu=cortex-m4 -T"C:\Users\Admin.ONTPC12\Desktop\UartxFirmwareRepo\UartxFirmware\Uatronica_Control_Board_DynamicUsage\STM32F446RETX_FLASH.ld" --specs=nosys.specs -Wl,-Map="Uatronica_Control_Board_DynamicUsage.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
+Finished building target: Uatronica_Control_Board_DynamicUsage.elf
+ 
+arm-none-eabi-size  Uatronica_Control_Board_DynamicUsage.elf 
+arm-none-eabi-objdump -h -S Uatronica_Control_Board_DynamicUsage.elf  > "Uatronica_Control_Board_DynamicUsage.list"
+   text	   data	    bss	    dec	    hex	filename
+  21412	    104	   2608	  24124	   5e3c	Uatronica_Control_Board_DynamicUsage.elf
+Finished building: default.size.stdout
+ 
+Finished building: Uatronica_Control_Board_DynamicUsage.list
+ 
+18:38:02 **** Incremental Build of configuration Debug for project Uatronica_Control_Board_DynamicUsage ****
+make -j4 all 
+arm-none-eabi-gcc "../Core/Src/main.c" -mcpu=cortex-m4 -std=gnu11 -g3 -DDEBUG -DUSE_HAL_DRIVER -DSTM32F446xx -c -I../Core/Inc -I../Drivers/STM32F4xx_HAL_Driver/Inc -I../Drivers/STM32F4xx_HAL_Driver/Inc/Legacy -I../Drivers/CMSIS/Device/ST/STM32F4xx/Include -I../Drivers/CMSIS/Include -O0 -ffunction-sections -fdata-sections -Wall -fstack-usage -fcyclomatic-complexity -MMD -MP -MF"Core/Src/main.d" -MT"Core/Src/main.o" --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -o "Core/Src/main.o"
+In file included from ../Core/Src/main.c:28:
+../Core/Src/main.c: In function 'configure_pins':
+../Core/Src/main.c:262:26: warning: array subscript has type 'char' [-Wchar-subscripts]
+  262 |             if (!isdigit(*c)) {
+      |                          ^~
+arm-none-eabi-gcc -o "Uatronica_Control_Board_DynamicUsage.elf" @"objects.list"   -mcpu=cortex-m4 -T"C:\Users\Admin.ONTPC12\Desktop\UartxFirmwareRepo\UartxFirmware\Uatronica_Control_Board_DynamicUsage\STM32F446RETX_FLASH.ld" --specs=nosys.specs -Wl,-Map="Uatronica_Control_Board_DynamicUsage.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
+Finished building target: Uatronica_Control_Board_DynamicUsage.elf
+ 
+arm-none-eabi-size  Uatronica_Control_Board_DynamicUsage.elf 
+arm-none-eabi-objdump -h -S Uatronica_Control_Board_DynamicUsage.elf  > "Uatronica_Control_Board_DynamicUsage.list"
+   text	   data	    bss	    dec	    hex	filename
+  21412	    104	   2608	  24124	   5e3c	Uatronica_Control_Board_DynamicUsage.elf
+Finished building: default.size.stdout
+ 
+Finished building: Uatronica_Control_Board_DynamicUsage.list
+ 

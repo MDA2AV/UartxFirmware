@@ -26,6 +26,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <ctype.h>
+
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -104,7 +105,7 @@ void process_command(char *command, UART_HandleTypeDef *huart); // Function to p
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
-// NEED TO INCREASE A BETTER PERFOMANCE SPEED!!!
+
 
 /**
  * @brief UART receive complete callback.
@@ -288,6 +289,7 @@ int configure_pins(UART_HandleTypeDef *huart, char *command)
     HAL_UART_Transmit(huart, (uint8_t *)confirmation_msg, strlen(confirmation_msg), HAL_MAX_DELAY);
     return 1;
 }
+
 
 
 /**
@@ -492,16 +494,6 @@ void process_command(char *command, UART_HandleTypeDef *huart)
 		// Apply the state to all configured output pins
 		set_output(huart, state);
 
-    }
-	// Check if the command is for resetting all pins (starts with 'r')
-	else if (strncmp(command, "r *", 3) == 0){
-
-    	GPIOA->ODR = 0x00; // Reset PortA
-    	GPIOB->ODR = 0x00; // Reset PortB
-    	GPIOC->ODR = 0x00; // Reset PortC
-
-    	// Confirmation message that all pins have been configured
-    	HAL_UART_Transmit(huart, (uint8_t *)"All Pins Have Been Reseted", 26, T_DELAY);
     }
     // If the command does not match 'd' or 's', it is unrecognized
     else {
