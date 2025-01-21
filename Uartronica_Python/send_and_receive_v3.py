@@ -94,7 +94,7 @@ def main():
         while True:  # Main loop for user interaction
             # Display command options to the user
             print("\nCommands:")
-            print("1. Read Inputs:        d (e.g., d PC0 PC1)")
+            print("1. Read Inputs:        d (e.g., d PC0 PC1 - MAXIMUM 2 PINS)")
             print("2. State Outputs:      sX (e.g., s1 PC8 - ANY Nº OF PINS)")
             print("3. Reset Output Pins:  r *")
             print("Type 'exit' to quit.\n")
