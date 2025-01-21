@@ -105,7 +105,7 @@ void process_command(char *command, UART_HandleTypeDef *huart); // Function to p
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
-
+// NEED TO INCREASE A BETTER PERFOMANCE SPEED!!!
 
 /**
  * @brief UART receive complete callback.
@@ -289,7 +289,6 @@ int configure_pins(UART_HandleTypeDef *huart, char *command)
     HAL_UART_Transmit(huart, (uint8_t *)confirmation_msg, strlen(confirmation_msg), HAL_MAX_DELAY);
     return 1;
 }
-
 
 
 /**
