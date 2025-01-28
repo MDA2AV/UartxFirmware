@@ -25,6 +25,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <ctype.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -71,15 +72,6 @@ typedef struct {
 
 OutputPin output_pins[MAX_OUTPUT_PINS]; // Array to hold the configurations of output pins
 uint8_t num_output_pins = 0;  // Counter to track the number of configured output pins.
-
-typedef struct {
-    GPIO_TypeDef *port;
-    uint16_t pin;
-} ResetPin;
-
-OutputPin reset_pins[MAX_RESET_PINS]; // Array to hold the configurations of reset pins
-uint8_t num_reset_pins = 0; // Counter to track the number of configured reset pins.
-
 
 // Buffers to store a single character received via UART for USART1, USART2, and USART3
 char rx_buffer1[1], rx_buffer2[1], rx_buffer3[1];
@@ -129,6 +121,7 @@ void process_command(char *command, UART_HandleTypeDef *huart); // Function to p
  *
  * @param huart Pointer to the UART handle that triggered the interrupt.
  */
+/*
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
     // Static variables to maintain the buffer indices for each UART
@@ -181,173 +174,121 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
         HAL_UART_Receive_IT(&huart3, (uint8_t *)rx_buffer3, 1);
     }
 }
-
-
-
-/**
- * @brief Configures GPIO pins as input based on the given command.
- *
- * This function parses a command string to identify and configure multiple GPIO pins
- * as input pins. The command format should specify the port (PA, PB, or PC) and
- * pin numbers (e.g., "d PA3 PB5 PC7"). The configured pins are stored in the `input_pins` array.
- *
- * Function behavior:
- * - Resets the current input pin list by setting `num_input_pins` to 0.
- * - Parses the command string to extract pin configurations.
- * - Validates the extracted pin numbers (0–15) and adds them to the `input_pins` array.
- * - Supports GPIO ports: PA, PB, and PC.
- *
- * @param command The command string specifying the input pins to configure.
- *                Example: "d PA0 PC5 PB7".
- */
-void configure_input_pins(char *command)
-{
-    num_input_pins = 0; // Reset the input pin list
-
-    // Tokenize the command string to extract pin configurations
-    char *token_i = strtok(command + strlen("d "), " ");
-    while (token_i && num_input_pins < MAX_INPUT_PINS) {
-        if (strncmp(token_i, "PC", 2) == 0) { // For GPIOC
-            uint8_t pin_number = atoi(token_i + 2); // Extract pin number
-            if (pin_number <= 15) { // Validate pin number
-                input_pins[num_input_pins].port = GPIOC;
-                input_pins[num_input_pins].pin = 1 << pin_number;
-                num_input_pins++;
-            }
-        } else if (strncmp(token_i, "PA", 2) == 0) { // For GPIOA
-            uint8_t pin_number = atoi(token_i + 2); // Extract pin number
-            if (pin_number <= 15) { // Validate pin number
-                input_pins[num_input_pins].port = GPIOA;
-                input_pins[num_input_pins].pin = 1 << pin_number;
-                num_input_pins++;
-            }
-        } else if (strncmp(token_i, "PB", 2) == 0) { // For GPIOB
-            uint8_t pin_number = atoi(token_i + 2); // Extract pin number
-            if (pin_number <= 15) { // Validate pin number
-                input_pins[num_input_pins].port = GPIOB;
-                input_pins[num_input_pins].pin = 1 << pin_number;
-                num_input_pins++;
-            }
-        }
-        // Move to the next token
-        token_i = strtok(NULL, " ");
-    }
-}
-
+*/
 
 
 /**
- * @brief Configures GPIO pins as output based on the given command.
+ * @brief Configures GPIO pins for input or output based on the command.
  *
- * This function parses a command string to identify and configure multiple GPIO pins
- * as output pins. The command format should specify the port (PA, PB, or PC) and pin
- * numbers (e.g., "s PA3 PB5 PC7"). The configured pins are stored in the `output_pins` array.
- *
- * Function behavior:
- * - Resets the current output pin list by setting `num_output_pins` to 0.
- * - Parses the command string to extract pin configurations.
- * - Validates the extracted pin numbers (0–15) and adds them to the `output_pins` array.
- * - Supports GPIO ports: PA, PB, and PC.
- * - Sends a confirmation message via UART once configuration is complete.
- *
- * @param huart   UART handle used for transmitting confirmation messages.
- * @param command The command string specifying the output pins to configure.
- *                Example: "s PA3 PB5 PC7".
- */
-void configure_output_pins(UART_HandleTypeDef *huart, char *command)
-{
-    num_output_pins = 0; // Reset the output pin list
-
-    // Tokenize the command string to extract pin configurations
-    char *token_o = strtok(command + strlen("s  "), " ");
-
-    while (token_o && num_output_pins < MAX_OUTPUT_PINS) {
-        if (strncmp(token_o, "PC", 2) == 0) { // For GPIOC
-            uint8_t pin_number = atoi(token_o + 2); // Extract pin number
-            if (pin_number <= 15) { // Validate pin number
-                output_pins[num_output_pins].port = GPIOC;
-                output_pins[num_output_pins].pin = 1 << pin_number;
-                num_output_pins++;
-            }
-        } else if (strncmp(token_o, "PA", 2) == 0) { // For GPIOA
-            uint8_t pin_number = atoi(token_o + 2); // Extract pin number
-            if (pin_number <= 15) { // Validate pin number
-                output_pins[num_output_pins].port = GPIOA;
-                output_pins[num_output_pins].pin = 1 << pin_number;
-                num_output_pins++;
-            }
-        } else if (strncmp(token_o, "PB", 2) == 0) { // For GPIOB
-            uint8_t pin_number = atoi(token_o + 2); // Extract pin number
-            if (pin_number <= 15) { // Validate pin number
-                output_pins[num_output_pins].port = GPIOB;
-                output_pins[num_output_pins].pin = 1 << pin_number;
-                num_output_pins++;
-            }
-        }
-        // Move to the next token
-        token_o = strtok(NULL, " ");
-    }
-
-    // Send confirmation message via UART
-    HAL_UART_Transmit(huart, (uint8_t *)"Output Pins Configured\n", 23, T_DELAY);
-}
-
-
-
-/**
- * @brief Configures the pins to be reset based on the provided command.
- *
- * This function parses the command string to identify and configure the pins
- * that should be reset. It stores the pin configurations in the `reset_pins` array.
- *
- * - The function assumes that the command string starts with "r " followed by
- *   pin names (e.g., "r PC8 PA9").
- * - It supports GPIO ports: GPIOA, GPIOB, and GPIOC.
- * - Each pin configuration is validated to ensure the pin number is between 0 and 15.
+ * This function parses a command string to identify and configure GPIO pins as either input or output.
+ * It validates the provided command for the correct format and range of pins. If the command specifies
+ * output pins, their state is set accordingly.
  *
  * Function behavior:
- * - Resets the `reset_pins` list by setting `num_reset_pins` to 0.
- * - Parses the command to extract pin names and validates them.
- * - If the pin is valid, it adds the configuration (port and pin) to the `reset_pins` array.
+ * - For "d <pins>": Configures the specified pins as input.
+ * - For "sX <pins>": Configures the pins as output and sets their state based on X ('1' for HIGH, '0' for LOW).
+ * - Provides error feedback for invalid commands or pin configurations.
  *
- * @param command The input string containing the reset command and pin names.
+ * Return Values:
+ * - `1`: Successfully configured pins.
+ * - `-1`: Invalid state provided in the command (e.g., non-'0' or non-'1' for output state).
+ * - `-2`: Unrecognized command prefix (neither 'd' nor 's').
+ * - `-3`: Invalid port, format, or pin.
+ * - `-4`: Invalid pin number (out of range 0-15).
  *
- * @note The array `reset_pins` and the variable `num_reset_pins` must be defined
- *       and initialized elsewhere in the program. Ensure `MAX_RESET_PINS` is set
- *       to the maximum number of resettable pins.
+ * @param huart   UART handle for transmitting confirmation or error messages.
+ * @param command The command string specifying the operation and pins (e.g., "d PA3 PB5").
+ * @return int    Status code indicating the result of the operation.
  */
-void configure_reset_pins(char *command)
+int configure_pins(UART_HandleTypeDef *huart, char *command)
 {
-    num_reset_pins = 0; // Reset the input pin list
+    uint8_t *num_pins = NULL;           // Pointer to track the number of configured pins
+    void *pins_array = NULL;            // Pointer to the target pins array
+    const char *operation = NULL;       // Operation type (Input or Output)
+    uint8_t max_pins = 0;               // Maximum pins allowed for the operation
+    char state = '\0';                  // State for output pins (used for `s` commands)
 
-    char *token_r = strtok(command + strlen("r "), " ");
-    while (token_r && num_reset_pins < MAX_RESET_PINS) {
-        if (strncmp(token_r, "PC", 2) == 0) { // For GPIOC
-            uint8_t pin_number = atoi(token_r + 2);
-            if (pin_number <= 15) { // Validate pin number
-                reset_pins[num_reset_pins].port = GPIOC;
-                reset_pins[num_reset_pins].pin = 1 << pin_number;
-                num_reset_pins++;
-            }
-        } else if (strncmp(token_r, "PA", 2) == 0) { // For GPIOC
-            uint8_t pin_number = atoi(token_r + 2);
-            if (pin_number <= 15) { // Validate pin number
-            	reset_pins[num_reset_pins].port = GPIOA;
-            	reset_pins[num_reset_pins].pin = 1 << pin_number;
-            	num_reset_pins++;
-            }
-        } else if (strncmp(token_r, "PB", 2) == 0) { // For GPIOC
-            uint8_t pin_number = atoi(token_r + 2);
-            if (pin_number <= 15) { // Validate pin number
-            	reset_pins[num_reset_pins].port = GPIOB;
-            	reset_pins[num_reset_pins].pin = 1 << pin_number;
-            	num_reset_pins++;
+    // Determine the type of configuration based on the command prefix
+    if (strncmp(command, "d ", 2) == 0) {
+        num_pins = &num_input_pins;
+        pins_array = input_pins;
+        operation = "Input";
+        max_pins = MAX_INPUT_PINS;
+        command += 2; // Skip "d " prefix
+    } else if (strncmp(command, "s", 1) == 0) {
+        num_pins = &num_output_pins;
+        pins_array = output_pins;
+        operation = "Output";
+        max_pins = MAX_OUTPUT_PINS;
+        state = command[1]; // Extract state ('1' or '0')
+
+        // Validate state
+        if (state != '1' && state != '0') {
+            HAL_UART_Transmit(huart, (uint8_t *)"Invalid State\n", 15, HAL_MAX_DELAY);
+            return -1;
+        }
+        command += 2; // Skip "sX " prefix
+    } else {
+        // Unknown command
+        HAL_UART_Transmit(huart, (uint8_t *)"Unknown Command\n", 17, HAL_MAX_DELAY);
+        return -2;
+    }
+
+    // Reset the pin list for the operation
+    *num_pins = 0;
+
+    // Tokenize the command to extract pin configurations
+    char *token = strtok(command, " ");
+    while (token && *num_pins < max_pins) {
+        // Validate port and pin format
+        if ((strncmp(token, "PA", 2) != 0 && strncmp(token, "PB", 2) != 0 && strncmp(token, "PC", 2) != 0) ||
+            strlen(token) < 3 || strlen(token) > 4) {
+            HAL_UART_Transmit(huart, (uint8_t *)"Invalid Port or Format\n", 24, HAL_MAX_DELAY);
+            return -3;
+        }
+
+        // Extract port
+        GPIO_TypeDef *port = NULL;
+        if (strncmp(token, "PA", 2) == 0) {
+            port = GPIOA;
+        } else if (strncmp(token, "PB", 2) == 0) {
+            port = GPIOB;
+        } else if (strncmp(token, "PC", 2) == 0) {
+            port = GPIOC;
+        }
+
+        // Validate pin number (digits only)
+        char *pin_str = token + 2; // Skip "PA", "PB", or "PC"
+        for (char *c = pin_str; *c; c++) {
+            if (!isdigit(*c)) {
+                HAL_UART_Transmit(huart, (uint8_t *)"Invalid Pin Format\n", 20, HAL_MAX_DELAY);
+                return -3;
             }
         }
-        token_r = strtok(NULL, " ");
-    }
-}
 
+        // Convert pin number to integer and validate range
+        uint8_t pin_number = atoi(pin_str);
+        if (pin_number > 15) {
+            HAL_UART_Transmit(huart, (uint8_t *)"Invalid Pin Number\n", 20, HAL_MAX_DELAY);
+            return -4;
+        }
+
+        // Add the pin to the respective array
+        if (port) {
+            ((InputPin *)pins_array)[*num_pins].port = port;
+            ((InputPin *)pins_array)[*num_pins].pin = 1 << pin_number;
+            (*num_pins)++;
+        }
+
+        token = strtok(NULL, " ");
+    }
+
+    // Send confirmation message
+    char confirmation_msg[50];
+    snprintf(confirmation_msg, sizeof(confirmation_msg), "%s Pins Configured\n", operation);
+    HAL_UART_Transmit(huart, (uint8_t *)confirmation_msg, strlen(confirmation_msg), HAL_MAX_DELAY);
+    return 1;
+}
 
 
 /**
@@ -369,13 +310,15 @@ void configure_reset_pins(char *command)
  */
 void handle_inputs(UART_HandleTypeDef *huart)
 {
-    // Iterate through all configured input pins
-    for (uint8_t i = 0; i < num_input_pins; i++) {
-        // Read the current state of the input pin
+    // Iterate through all configured input pins, excluding the last pin (to avoid out-of-bounds access)
+    for (uint8_t i = 0; i < num_input_pins - 1; i++) {
+        // Read the current states of two consecutive input pins
         GPIO_PinState state = HAL_GPIO_ReadPin(input_pins[i].port, input_pins[i].pin);
+        GPIO_PinState state_2 = HAL_GPIO_ReadPin(input_pins[i + 1].port, input_pins[i + 1].pin);
         char response[30];
+        char response_2[30];
 
-        // Determine the port name dynamically
+        // Determine the port name for the first pin dynamically
         const char *port_name;
         if (input_pins[i].port == GPIOA) {
             port_name = "PA";
@@ -384,136 +327,186 @@ void handle_inputs(UART_HandleTypeDef *huart)
         } else if (input_pins[i].port == GPIOC) {
             port_name = "PC";
         } else {
-            port_name = "UNKNOWN"; // In case of invalid port
+            port_name = "UNKNOWN"; // Handle invalid port cases
         }
 
-        // Format the response with the port name, pin number, and state
+        // Format the response string for the first pin
         snprintf(response, sizeof(response), "Pin %s%d: %s\n",
                  port_name,
                  __builtin_ctz(input_pins[i].pin), // Extract pin number from bit position
                  state == GPIO_PIN_SET ? "SET" : "RESET");
 
-        // Send the response via UART
+        // Determine the port name for the second pin dynamically
+        const char *port_name_2;
+        if (input_pins[i + 1].port == GPIOA) {
+            port_name_2 = "PA";
+        } else if (input_pins[i + 1].port == GPIOB) {
+            port_name_2 = "PB";
+        } else if (input_pins[i + 1].port == GPIOC) {
+            port_name_2 = "PC";
+        } else {
+            port_name_2 = "UNKNOWN"; // Handle invalid port cases
+        }
+
+        // Format the response string for the second pin
+        snprintf(response_2, sizeof(response_2), "Pin %s%d: %s\n",
+                 port_name_2,
+                 __builtin_ctz(input_pins[i + 1].pin), // Extract pin number from bit position
+                 state_2 == GPIO_PIN_SET ? "SET" : "RESET");
+
+        // Transmit the responses for both pins via UART
         HAL_UART_Transmit(huart, (uint8_t *)response, strlen(response), T_DELAY);
+        HAL_UART_Transmit(huart, (uint8_t *)response_2, strlen(response_2), T_DELAY);
+
+        // Evaluate the combined state of the two pins and transmit the result
+        if (state == GPIO_PIN_SET) {
+            if (state_2 == GPIO_PIN_SET) {
+                HAL_UART_Transmit(huart, (uint8_t *)"Out: 11 -> 3", 12, T_DELAY);
+            } else if (state_2 == GPIO_PIN_RESET) {
+                HAL_UART_Transmit(huart, (uint8_t *)"Out: 10 -> 2", 12, T_DELAY);
+            }
+        } else if (state == GPIO_PIN_RESET) {
+            if (state_2 == GPIO_PIN_SET) {
+                HAL_UART_Transmit(huart, (uint8_t *)"Out: 01 -> 1", 12, T_DELAY);
+            } else if (state_2 == GPIO_PIN_RESET) {
+                HAL_UART_Transmit(huart, (uint8_t *)"Out: 00 -> 0", 12, T_DELAY);
+            }
+        }
     }
 }
 
 
 
 /**
- * @brief Sets the state of a specified output pin.
+ * @brief Sets the state of all configured output pins and provides feedback via UART.
  *
- * This function identifies the specified output pin by its index, determines the corresponding GPIO
- * port and pin, and sets its state (high or low) based on the provided state value. It also sends a
- * confirmation message via UART.
+ * This function iterates through the list of configured output pins, sets each pin to the
+ * specified state (high or low), and counts the number of pins updated. After processing,
+ * it transmits a confirmation message via UART, including the number of pins affected and
+ * their new state.
  *
  * Function behavior:
- * - Converts the provided pin identifier (character) to an integer index.
- * - Validates the pin index against the number of configured output pins.
- * - Sets the state of the pin (high for '1', low for '0') using `HAL_GPIO_WritePin`.
- * - Sends a confirmation message with the pin index and state.
- * - If the pin index is invalid, an error message is sent via UART.
+ * - Iterates through the `output_pins` array and sets each pin's state based on the `state` parameter.
+ * - Counts the total number of pins successfully updated.
+ * - Constructs and transmits a message indicating the count of updated pins and their state.
  *
- * @param huart UART handle used for transmitting confirmation or error messages.
- * @param state The desired state of the pin ('1' for high, '0' for low).
+ * Feedback:
+ * - Sends a confirmation message in the format: "<number> State Set - <HIGH/LOW>\n".
+ * - The state is derived from the `state` parameter ('1' for HIGH, '0' for LOW).
+ *
+ * @param huart UART handle used for transmitting confirmation messages.
+ * @param state The desired state for the output pins ('1' for high, '0' for low).
  */
 void set_output(UART_HandleTypeDef *huart, char state)
 {
-    // Convert the pin identifier to an integer index
-	   for (uint8_t i = 0; i < num_output_pins; i++) {
-    // Check if the pin index is within the configured range{
-        // Retrieve the port and pin configuration for the specified output pin
+    int counter = 0;                // Counter to track the number of configured pins
+    char message[50];               // Buffer to hold the UART message
+
+    // Iterate through all configured output pins
+    for (uint8_t i = 0; i < num_output_pins; i++) {
+        // Retrieve the port and pin configuration for the current output pin
         GPIO_TypeDef *port = output_pins[i].port;
         uint16_t gpio_pin = output_pins[i].pin;
 
-
         // Set the pin state based on the provided state value
         if (state == '1') {
-				HAL_GPIO_WritePin(port, gpio_pin, GPIO_PIN_SET); // Set pin to high
-				HAL_UART_Transmit(huart, (uint8_t *)"STATES CONFIGURED TO HIGH\n", 26, T_DELAY);
-
+            // Set the pin to HIGH
+            HAL_GPIO_WritePin(port, gpio_pin, GPIO_PIN_SET);
+            counter++; // Increment the counter for successfully configured pins
         } else if (state == '0') {
-    			HAL_GPIO_WritePin(port, gpio_pin, GPIO_PIN_RESET); // Set pin to low
-				HAL_UART_Transmit(huart, (uint8_t *)"STATES CONFIGURED TO LOW\n", 25, T_DELAY);
-        } else {
-			// Send an error message if the pin index is invalid
-			HAL_UART_Transmit(huart, (uint8_t *)"Invalid Pin Index\n", 19, T_DELAY);
+            // Set the pin to LOW
+            HAL_GPIO_WritePin(port, gpio_pin, GPIO_PIN_RESET);
+            counter++; // Increment the counter for successfully configured pins
         }
-	}
-}
-
-
-
-
-/**
- * @brief Resets the state of output pins.
- *
- * This function resets the state of either a specific output pin or all configured output pins.
- * If a pin name is provided, it searches for the pin in the `output_pins` array and resets its state.
- * If no pin name is provided, it resets the state of all configured output pins. A confirmation
- * message is sent via UART for each action.
- *
- * Function behavior:
- * - If a specific pin is provided, the function searches for it in the `output_pins` array.
- * - If the pin is found, it resets its state and sends a confirmation message.
- * - If the pin is not found, it sends an error message.
- * - If no specific pin is provided, it resets the state of all output pins and sends a confirmation message.
- *
- * @param huart         UART handle used for transmitting confirmation or error messages.
- * @param pin_to_reset  Pointer to a string representing the pin name (e.g., "PC8").
- *                      If `NULL`, all output pins are reset.
- */
-void reset_output_pins(UART_HandleTypeDef *huart, char *pin_to_reset)
-{
-    // Iterate through all configured input pins
-    for (uint8_t i = 0; i < num_reset_pins; i++) {
-        // Read the current state of the input pin
-        HAL_GPIO_WritePin(reset_pins[i].port, reset_pins[i].pin, GPIO_PIN_RESET);
     }
-    // Send the response via UART
-    HAL_UART_Transmit(huart, (uint8_t *)"Pins Reseted\n", 13, T_DELAY);
+
+    // Construct the message with the counter and state
+    snprintf(message, sizeof(message), "%d State Set - %s\n", counter, state == '1' ? "HIGH" : "LOW");
+
+    // Transmit the constructed message via UART
+    HAL_UART_Transmit(huart, (uint8_t *)message, strlen(message), T_DELAY);
 }
 
 
 
 /**
- * @brief Processes a received command and performs the appropriate action.
+ * @brief Processes and executes commands for GPIO pin configuration and control.
  *
- * This function interprets the incoming command string and executes the corresponding
- * action, such as configuring input/output pins, setting output states, or resetting pins.
- * It also provides error feedback for unrecognized commands.
+ * This function interprets a received command string and performs actions such as
+ * configuring GPIO pins as inputs or outputs, setting the state of output pins,
+ * or resetting specific pins. It also validates the input and provides feedback
+ * for invalid commands or configurations.
  *
  * Function behavior:
- * - Commands starting with 'd': Configure and handle input pins.
- * - Commands starting with 's': Configure output pins and set their state.
- * - Commands starting with 'r': Reset the state of specified output pins.
- * - Any other command: Sends an "Unknown Command" message.
+ * - Commands starting with 'd': Configures up to two input pins and processes their states.
+ * - Commands starting with 's': Configures output pins, sets their states (high or low),
+ *   and provides feedback on the number of pins configured.
+ * - Commands with invalid formats or exceeding limits are rejected with appropriate error messages.
+ * - Unrecognized commands return an "Unknown Command" message.
  *
- * @param command The command string received via UART.
- * @param huart   UART handle used for transmitting responses or error messages.
+ * Command validation:
+ * - Ensures proper syntax, valid pin numbers, and acceptable command length for each type.
+ * - Rejects malformed commands early to avoid unnecessary processing.
+ *
+ * @param command The command string received via UART, specifying the action and pins.
+ * @param huart   UART handle used for transmitting confirmation, error, or status messages.
  */
 void process_command(char *command, UART_HandleTypeDef *huart)
 {
-    // Check if the command is for configuring input pins
-    if (strncmp(command, "d", 1) == 0) {
-        configure_input_pins(command); // Configure input pins
-        handle_inputs(huart);          // Handle and report input pin states
+    // Check if the command is for configuring input pins (starts with 'd')
+	if (strncmp(command, "d", 1) == 0) {
+	    // Validate command length to ensure only 2 pins are being configured
+	    if (strlen(command) < 9 || strlen(command) > 11) {
+	        // If the command length is invalid, send an error message and exit
+	        HAL_UART_Transmit(huart, (uint8_t *)"NOK - INVALID INPUT - 2 PINS ONLY", 33, T_DELAY);
+	        return; // Exit without further processing
+	    }
 
-    } else if (strncmp(command, "s", 1) == 0) {
-		configure_output_pins(huart, command); // Configure output pins
+	    // Attempt to configure the input pins
+	    int result_handle = configure_pins(huart, command);
+	    if (result_handle == 1) {
+	        // If configuration is successful, acknowledge with "OK"
+	        HAL_UART_Transmit(huart, (uint8_t *)"OK\n", 3, T_DELAY);
+	        // Process and report the state of input pins
+	        handle_inputs(huart);
+	    } else if (result_handle < 0) {
+	        // If configuration failed, send a "NOK" error message
+	        HAL_UART_Transmit(huart, (uint8_t *)"NOK\n", 4, T_DELAY);
+	    }
 
-		// Extract pin index and desired state from the command
+	}
+    // Check if the command is for configuring output pins (starts with 's')
+	else if (strncmp(command, "s", 1) == 0) {
+    	// Attempt to configure the output pins
+    	int result_set = configure_pins(huart, command);
+    	if (result_set == 1) {
+            // If configuration is successful, acknowledge with "OK"
+            HAL_UART_Transmit(huart, (uint8_t *)"OK\n", 3, HAL_MAX_DELAY);
+    	} else if (result_set < 0) {
+            // If configuration failed, send a "NOK" error message and exit
+            HAL_UART_Transmit(huart, (uint8_t *)"NOK\n", 4, HAL_MAX_DELAY);
+            return; // Exit without setting the output state
+    	}
+
+		// Extract the desired state ('1' for HIGH or '0' for LOW) from the command
 		char state = command[1];
-		set_output(huart, state); // Set the output state
+		// Apply the state to all configured output pins
+		set_output(huart, state);
 
-    } else if (strncmp(command, "r", 1) == 0) {
-    	configure_reset_pins(command); // Configure reset pins
-        // Handle reset command
-        char *pin_to_reset = strtok(command + strlen("r "), " "); // Extract pin to reset
-        reset_output_pins(huart, pin_to_reset); // Reset specified or all pins
+    }
+	// Check if the command is for resetting all pins (starts with 'r')
+	else if (strncmp(command, "r *", 3) == 0){
 
-    } else {
-        // Send error message for unrecognized commands
+    	GPIOA->ODR = 0x00; // Reset PortA
+    	GPIOB->ODR = 0x00; // Reset PortB
+    	GPIOC->ODR = 0x00; // Reset PortC
+
+    	// Confirmation message that all pins have been configured
+    	HAL_UART_Transmit(huart, (uint8_t *)"All Pins Have Been Reseted", 26, T_DELAY);
+    }
+    // If the command does not match 'd' or 's', it is unrecognized
+    else {
+        // Send an error message indicating the command is unknown
         HAL_UART_Transmit(huart, (uint8_t *)"Unknown Command\n", 17, T_DELAY);
     }
 }
@@ -591,6 +584,8 @@ int main(void)
   }
   /* USER CODE END 3 */
 }
+
+
 
 /**
   * @brief System Clock Configuration
@@ -819,20 +814,3 @@ void Error_Handler(void)
   }
   /* USER CODE END Error_Handler_Debug */
 }
-
-#ifdef  USE_FULL_ASSERT
-/**
-  * @brief  Reports the name of the source file and the source line number
-  *         where the assert_param error has occurred.
-  * @param  file: pointer to the source file name
-  * @param  line: assert_param error line source number
-  * @retval None
-  */
-void assert_failed(uint8_t *file, uint32_t line)
-{
-  /* USER CODE BEGIN 6 */
-  /* User can add his own implementation to report the file name and line number,
-     ex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
-  /* USER CODE END 6 */
-}
-#endif /* USE_FULL_ASSERT */
