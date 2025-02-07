@@ -25,6 +25,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <ctype.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -282,9 +283,10 @@ int configure_pins(UART_HandleTypeDef *huart, char *command)
     }
 
     // Send confirmation message
-    char confirmation_msg[50];
+    /*char confirmation_msg[50];
     snprintf(confirmation_msg, sizeof(confirmation_msg), "%s Pins Configured\n", operation);
     HAL_UART_Transmit(huart, (uint8_t *)confirmation_msg, strlen(confirmation_msg), HAL_MAX_DELAY);
+    */
     return 1;
 }
 
@@ -313,8 +315,8 @@ void handle_inputs(UART_HandleTypeDef *huart)
         // Read the current states of two consecutive input pins
         GPIO_PinState state = HAL_GPIO_ReadPin(input_pins[i].port, input_pins[i].pin);
         GPIO_PinState state_2 = HAL_GPIO_ReadPin(input_pins[i + 1].port, input_pins[i + 1].pin);
-        char response[30];
-        char response_2[30];
+       // char response[30];
+       // char response_2[30];
 
         // Determine the port name for the first pin dynamically
         const char *port_name;
@@ -328,11 +330,13 @@ void handle_inputs(UART_HandleTypeDef *huart)
             port_name = "UNKNOWN"; // Handle invalid port cases
         }
 
+        /*
         // Format the response string for the first pin
         snprintf(response, sizeof(response), "Pin %s%d: %s\n",
                  port_name,
                  __builtin_ctz(input_pins[i].pin), // Extract pin number from bit position
                  state == GPIO_PIN_SET ? "SET" : "RESET");
+         */
 
         // Determine the port name for the second pin dynamically
         const char *port_name_2;
@@ -346,28 +350,31 @@ void handle_inputs(UART_HandleTypeDef *huart)
             port_name_2 = "UNKNOWN"; // Handle invalid port cases
         }
 
+        /*
         // Format the response string for the second pin
         snprintf(response_2, sizeof(response_2), "Pin %s%d: %s\n",
                  port_name_2,
                  __builtin_ctz(input_pins[i + 1].pin), // Extract pin number from bit position
                  state_2 == GPIO_PIN_SET ? "SET" : "RESET");
 
+
         // Transmit the responses for both pins via UART
         HAL_UART_Transmit(huart, (uint8_t *)response, strlen(response), T_DELAY);
         HAL_UART_Transmit(huart, (uint8_t *)response_2, strlen(response_2), T_DELAY);
+		*/
 
         // Evaluate the combined state of the two pins and transmit the result
         if (state == GPIO_PIN_SET) {
             if (state_2 == GPIO_PIN_SET) {
-                HAL_UART_Transmit(huart, (uint8_t *)"Out: 11 -> 3", 12, T_DELAY);
+                HAL_UART_Transmit(huart, (uint8_t *)"3", 1, T_DELAY);
             } else if (state_2 == GPIO_PIN_RESET) {
-                HAL_UART_Transmit(huart, (uint8_t *)"Out: 10 -> 2", 12, T_DELAY);
+                HAL_UART_Transmit(huart, (uint8_t *)"2", 1, T_DELAY);
             }
         } else if (state == GPIO_PIN_RESET) {
             if (state_2 == GPIO_PIN_SET) {
-                HAL_UART_Transmit(huart, (uint8_t *)"Out: 01 -> 1", 12, T_DELAY);
+                HAL_UART_Transmit(huart, (uint8_t *)"1", 1, T_DELAY);
             } else if (state_2 == GPIO_PIN_RESET) {
-                HAL_UART_Transmit(huart, (uint8_t *)"Out: 00 -> 0", 12, T_DELAY);
+                HAL_UART_Transmit(huart, (uint8_t *)"0", 1, T_DELAY);
             }
         }
     }
@@ -398,7 +405,7 @@ void handle_inputs(UART_HandleTypeDef *huart)
 void set_output(UART_HandleTypeDef *huart, char state)
 {
     int counter = 0;                // Counter to track the number of configured pins
-    char message[50];               // Buffer to hold the UART message
+    //char message[50];               // Buffer to hold the UART message
 
     // Iterate through all configured output pins
     for (uint8_t i = 0; i < num_output_pins; i++) {
@@ -419,10 +426,8 @@ void set_output(UART_HandleTypeDef *huart, char state)
     }
 
     // Construct the message with the counter and state
-    snprintf(message, sizeof(message), "%d State Set - %s\n", counter, state == '1' ? "HIGH" : "LOW");
-
     // Transmit the constructed message via UART
-    HAL_UART_Transmit(huart, (uint8_t *)message, strlen(message), T_DELAY);
+    HAL_UART_Transmit(huart, (uint8_t *)"OK", 2, T_DELAY);
 }
 
 
@@ -464,7 +469,7 @@ void process_command(char *command, UART_HandleTypeDef *huart)
 	    int result_handle = configure_pins(huart, command);
 	    if (result_handle == 1) {
 	        // If configuration is successful, acknowledge with "OK"
-	        HAL_UART_Transmit(huart, (uint8_t *)"OK\n", 3, T_DELAY);
+	        //HAL_UART_Transmit(huart, (uint8_t *)"OK\n", 3, T_DELAY);
 	        // Process and report the state of input pins
 	        handle_inputs(huart);
 	    } else if (result_handle < 0) {
@@ -479,7 +484,7 @@ void process_command(char *command, UART_HandleTypeDef *huart)
     	int result_set = configure_pins(huart, command);
     	if (result_set == 1) {
             // If configuration is successful, acknowledge with "OK"
-            HAL_UART_Transmit(huart, (uint8_t *)"OK\n", 3, HAL_MAX_DELAY);
+            // HAL_UART_Transmit(huart, (uint8_t *)"OK\n", 3, HAL_MAX_DELAY);
     	} else if (result_set < 0) {
             // If configuration failed, send a "NOK" error message and exit
             HAL_UART_Transmit(huart, (uint8_t *)"NOK\n", 4, HAL_MAX_DELAY);
@@ -500,7 +505,7 @@ void process_command(char *command, UART_HandleTypeDef *huart)
     	GPIOC->ODR = 0x00; // Reset PortC
 
     	// Confirmation message that all pins have been configured
-    	HAL_UART_Transmit(huart, (uint8_t *)"All Pins Have Been Reseted", 26, T_DELAY);
+    	HAL_UART_Transmit(huart, (uint8_t *)"OK", 26, T_DELAY);
     }
     // If the command does not match 'd' or 's', it is unrecognized
     else {

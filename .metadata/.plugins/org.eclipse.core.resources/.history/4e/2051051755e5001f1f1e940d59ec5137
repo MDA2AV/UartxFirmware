@@ -121,7 +121,6 @@ void process_command(char *command, UART_HandleTypeDef *huart); // Function to p
  *
  * @param huart Pointer to the UART handle that triggered the interrupt.
  */
-/*
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
     // Static variables to maintain the buffer indices for each UART
@@ -174,7 +173,7 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
         HAL_UART_Receive_IT(&huart3, (uint8_t *)rx_buffer3, 1);
     }
 }
-*/
+
 
 
 /**
@@ -330,11 +329,13 @@ void handle_inputs(UART_HandleTypeDef *huart)
             port_name = "UNKNOWN"; // Handle invalid port cases
         }
 
+        /*
         // Format the response string for the first pin
         snprintf(response, sizeof(response), "Pin %s%d: %s\n",
                  port_name,
                  __builtin_ctz(input_pins[i].pin), // Extract pin number from bit position
                  state == GPIO_PIN_SET ? "SET" : "RESET");
+         */
 
         // Determine the port name for the second pin dynamically
         const char *port_name_2;
@@ -348,28 +349,31 @@ void handle_inputs(UART_HandleTypeDef *huart)
             port_name_2 = "UNKNOWN"; // Handle invalid port cases
         }
 
+        /*
         // Format the response string for the second pin
         snprintf(response_2, sizeof(response_2), "Pin %s%d: %s\n",
                  port_name_2,
                  __builtin_ctz(input_pins[i + 1].pin), // Extract pin number from bit position
                  state_2 == GPIO_PIN_SET ? "SET" : "RESET");
 
+
         // Transmit the responses for both pins via UART
         HAL_UART_Transmit(huart, (uint8_t *)response, strlen(response), T_DELAY);
         HAL_UART_Transmit(huart, (uint8_t *)response_2, strlen(response_2), T_DELAY);
+		*/
 
         // Evaluate the combined state of the two pins and transmit the result
         if (state == GPIO_PIN_SET) {
             if (state_2 == GPIO_PIN_SET) {
-                HAL_UART_Transmit(huart, (uint8_t *)"Out: 11 -> 3", 12, T_DELAY);
+                HAL_UART_Transmit(huart, (uint8_t *)"3", 1, T_DELAY);
             } else if (state_2 == GPIO_PIN_RESET) {
-                HAL_UART_Transmit(huart, (uint8_t *)"Out: 10 -> 2", 12, T_DELAY);
+                HAL_UART_Transmit(huart, (uint8_t *)"2", 1, T_DELAY);
             }
         } else if (state == GPIO_PIN_RESET) {
             if (state_2 == GPIO_PIN_SET) {
-                HAL_UART_Transmit(huart, (uint8_t *)"Out: 01 -> 1", 12, T_DELAY);
+                HAL_UART_Transmit(huart, (uint8_t *)"1", 1, T_DELAY);
             } else if (state_2 == GPIO_PIN_RESET) {
-                HAL_UART_Transmit(huart, (uint8_t *)"Out: 00 -> 0", 12, T_DELAY);
+                HAL_UART_Transmit(huart, (uint8_t *)"0", 1, T_DELAY);
             }
         }
     }
@@ -421,10 +425,10 @@ void set_output(UART_HandleTypeDef *huart, char state)
     }
 
     // Construct the message with the counter and state
-    snprintf(message, sizeof(message), "%d State Set - %s\n", counter, state == '1' ? "HIGH" : "LOW");
+    //snprintf(message, sizeof(message), "%d State Set - %s\n", counter, state == '1' ? "HIGH" : "LOW");
 
     // Transmit the constructed message via UART
-    HAL_UART_Transmit(huart, (uint8_t *)message, strlen(message), T_DELAY);
+    //HAL_UART_Transmit(huart, (uint8_t *)message, strlen(message), T_DELAY);
 }
 
 
